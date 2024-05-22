@@ -4,13 +4,13 @@ const MAGIC = 0x1BADB002;
 const FLAGS = ALIGN | MEMINFO;
 
 const MultiBoot = packed struct {
-    magic: i32,
+    magic: i32 = MAGIC,
     flags: i32,
     checksum: i32,
+    _: i32 = 0,
 };
 
 export var multiboot align(4) linksection(".multiboot") = MultiBoot{
-    .magic = MAGIC,
     .flags = FLAGS,
     .checksum = -(MAGIC + FLAGS),
 };
@@ -18,7 +18,13 @@ export var multiboot align(4) linksection(".multiboot") = MultiBoot{
 export var stack: [16 * 1024]u8 align(16) linksection(".bss") = undefined;
 
 export fn _start() callconv(.Naked) noreturn {
-    @call(.{ .stack = &stack }, kernel_main, .{});
+    asm volatile (
+        \\ movl %[stk], %esp
+        \\ movl %esp, %ebp
+        :
+        : [stk] "{ecx}" (@intFromPtr(&stack) + @sizeOf(@TypeOf(stack))),
+    );
+    @call(.always_inline, kernel_main, .{});
     while (true)
         asm volatile ("hlt");
 }

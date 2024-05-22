@@ -13,11 +13,7 @@ pub fn build(b: *std.Build) void {
     os.setLinkerScriptPath(.{ .path = "linker.ld" });
     b.installArtifact(os);
 
-    const run_cmd = b.addSystemCommand(&.{
-        "qemu-system-i386",
-        "-kernel",
-        "zig-out/bin/image.elf",
-    });
+    const run_cmd = b.addSystemCommand(&.{ "qemu-system-i386", "-kernel", "zig-out/bin/image.elf", "-display", "sdl" });
 
     const run_step = b.step("run", "Run the os");
     run_step.dependOn(&run_cmd.step);

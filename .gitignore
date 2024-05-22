@@ -1,0 +1,10 @@
+zig-cache/
+*.o
+*.bin
+Bin/
+Build/
+*.swp
+*.swx
+*.so
+*.a
+*.exe

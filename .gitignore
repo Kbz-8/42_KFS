@@ -8,3 +8,4 @@ Build/
 *.so
 *.a
 *.exe
+zig-out/

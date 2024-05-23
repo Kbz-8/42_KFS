@@ -4,6 +4,7 @@ services:
   app:
     build: 
       dockerfile : Dockerfile
+    privileged: true
     environment:
       - DISPLAY=${DISPLAY}
     volumes:

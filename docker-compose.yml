@@ -3,7 +3,6 @@ version: "3"
 services:
   app:
     build: 
-      context : kfs
       dockerfile : Dockerfile
     environment:
       - DISPLAY=${DISPLAY}

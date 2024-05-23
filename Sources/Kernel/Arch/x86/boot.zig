@@ -14,18 +14,13 @@ export var multiboot align(4) linksection(".multiboot") = MultiBoot{
     .checksum = -(MAGIC + FLAGS),
 };
 
-export var kernel_stack: [16 * 1024]u8 align(16) linksection(".bss") = undefined;
+export var kernel_stack_bytes: [16 * 1024]u8 align(16) linksection(".bss") = undefined;
+const kernel_stack_bytes_slice = kernel_stack_bytes[0..];
 
 extern fn kmain() void;
 
 export fn _start() align(16) linksection(".text.boot") callconv(.Naked) noreturn {
-    // Setup the stack
-    asm volatile (
-        \\.extern KERNEL_STACK_END
-        \\mov $KERNEL_STACK_END, %%esp
-        \\sub $32, %%esp
-        \\mov %%esp, %%ebp
-    );
-    kmain();
-    while (true) {}
+    @call(.{ .stack = kernel_stack_bytes_slice }, kmain, .{});
+    while (true)
+        asm volatile ("hlt");
 }

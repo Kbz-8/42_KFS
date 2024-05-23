@@ -1,24 +1,28 @@
 const std = @import("std");
+const Target = @import("std").Target;
+const CrossTarget = @import("std").zig.CrossTarget;
 
-pub fn build(b: *std.Build) void {
-    const kernel = b.addExecutable(.{
-        .name = "kernel.elf",
-        .root_source_file = .{ .path = "Sources/Kernel/kmain.zig" },
-        .target = b.resolveTargetQuery(.{
-            .cpu_arch = .x86,
-            .abi = .none,
-            .os_tag = .freestanding,
-        }),
-        .optimize = b.standardOptimizeOption(.{}),
-    });
+pub fn build(b: *std.build.Builder) void {
+    const target = CrossTarget{
+        .cpu_arch = Target.Cpu.Arch.i386,
+        .os_tag = Target.Os.Tag.freestanding,
+        .abi = Target.Abi.none,
+    };
+
+    const mode = b.standardReleaseOptions();
+
+    const kernel = b.addExecutable("kernel.elf", "Sources/Kernel/kmain.zig");
+    kernel.setTarget(target);
+    kernel.setBuildMode(mode);
     kernel.setLinkerScriptPath(.{ .path = "linker.ld" });
-    b.installArtifact(kernel);
+    kernel.code_model = .kernel;
+    kernel.install();
 
     const kernel_step = b.step("kernel", "Build the kernel");
-    kernel_step.dependOn(&kernel.step);
+    kernel_step.dependOn(&kernel.install_step.?.step);
 
-    const iso_dir = b.fmt("{s}/iso_root/", .{b.cache_root.path orelse "."});
-    const kernel_path = b.fmt("{s}/kernel.elf", .{b.exe_dir});
+    const iso_dir = b.fmt("{s}/iso_root/", .{b.cache_root});
+    const kernel_path = b.getInstallPath(kernel.install_step.?.dest_dir, kernel.out_filename);
     const iso_path = b.fmt("{s}/disk.iso", .{b.exe_dir});
 
     const iso_cmd_str = &[_][]const u8{ "/bin/sh", "-c", std.mem.concat(b.allocator, u8, &[_][]const u8{ "mkdir -p ", iso_dir, " && ", "cp ", kernel_path, " ", iso_dir, " && ", "cp Sources/Grub/grub.cfg ", iso_dir, " && ", "grub-mkrescue -o ", iso_path, " ", iso_dir }) catch unreachable };

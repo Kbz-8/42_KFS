@@ -5,9 +5,7 @@ RUN apt upgrade -y
 RUN apt install wget -y
 RUN apt install tar -y
 
-RUN  apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 379CE192D401AB61
-RUN echo 'deb https://dl.bintray.com/dryzig/zig-debian bullseye main' | sudo tee -a /etc/apt/sources.list
-RUN apt update
-RUN sudo apt install zig
-
+RUN wget https://ziglang.org/download/0.12.0/zig-linux-x86_64-0.12.0.tar.xz
+RUN tar -xpf zig-linux-x86_64-0.12.0.tar.xz
+RUN mv zig-linux-x86_64-0.12.0/zig /bin
 RUN apt install qemu -y

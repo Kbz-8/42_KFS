@@ -1,36 +1,17 @@
-const ALIGN = 1 << 0;
-const MEMINFO = 1 << 1;
-const MAGIC = 0x1BADB002;
-const FLAGS = ALIGN | MEMINFO;
+const builtin = @import("builtin");
+const is_test = builtin.is_test;
 
-const MultiBoot = packed struct {
-    magic: i32 = MAGIC,
-    flags: i32,
-    checksum: i32,
-    _: i32 = 0,
-};
-
-export var multiboot align(4) linksection(".multiboot") = MultiBoot{
-    .flags = FLAGS,
-    .checksum = -(MAGIC + FLAGS),
-};
-
-export var stack: [16 * 1024]u8 align(16) linksection(".bss") = undefined;
-
-export fn _start() callconv(.Naked) noreturn {
-    asm volatile (
-        \\ movl %[stk], %esp
-        \\ movl %esp, %ebp
-        :
-        : [stk] "{ecx}" (@intFromPtr(&stack) + @sizeOf(@TypeOf(stack))),
-    );
-    @call(.always_inline, kernel_main, .{});
-    while (true)
-        asm volatile ("hlt");
+comptime {
+    if (!is_test) {
+        switch (builtin.cpu.arch) {
+            .x86 => _ = @import("Arch/x86/boot.zig"),
+            else => unreachable,
+        }
+    }
 }
 
-fn kernel_main() void {
-    const vga_buffer: [*]u8 = @ptrFromInt(0xB8000);
+export fn kmain() void {
+    const vga_buffer: [*]u16 = @ptrFromInt(0xB8000);
     vga_buffer[0] = '4';
     vga_buffer[1] = '2';
 }

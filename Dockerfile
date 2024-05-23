@@ -17,6 +17,7 @@ RUN apt install grub -y
 RUN apt install xorriso -y
 RUN apt install mtools -y
 
+RUN apt install xauth -y
 COPY kfs ./kfs
 WORKDIR "kfs"
 

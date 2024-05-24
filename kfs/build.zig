@@ -1,9 +1,10 @@
 const std = @import("std");
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) void
+{
     const kernel = b.addExecutable(.{
         .name = "kernel.elf",
-        .root_source_file = .{ .path = "Sources/Kernel/kmain.zig" },
+        .root_source_file = .{ .path = "sources/kernel/kmain.zig" },
         .target = b.resolveTargetQuery(.{
             .cpu_arch = .x86,
             .abi = .none,
@@ -11,6 +12,7 @@ pub fn build(b: *std.Build) void {
         }),
         .optimize = b.standardOptimizeOption(.{}),
     });
+    kernel.addIncludePath(.{ .path = "sources/libc/includes" });
     kernel.setLinkerScriptPath(.{ .path = "linker.ld" });
     b.installArtifact(kernel);
 
@@ -26,7 +28,7 @@ pub fn build(b: *std.Build) void {
         std.mem.concat(b.allocator, u8, &[_][]const u8{
         "mkdir -p ", iso_dir, "/boot/ && ",
         "cp ", kernel_path, " ", iso_dir, "/boot/ && ",
-        "cp Sources/Grub/grub.cfg ", iso_dir, "/boot/ && ",
+        "cp sources/grub/grub.cfg ", iso_dir, "/boot/ && ",
         "grub-mkrescue -o ", iso_path, " ", iso_dir })
     catch unreachable };
 

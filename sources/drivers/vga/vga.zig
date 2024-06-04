@@ -1,4 +1,4 @@
-const VGA_COLOR = enum(u16)
+pub const VGA_COLOR = enum(u16)
 {
 	VGA_COLOR_BLACK = 0,
 	VGA_COLOR_BLUE = 1,
@@ -45,12 +45,12 @@ var vga = VGA_TERMINAL
 	.VGA_terminal_color = vgaColor(VGA_COLOR.VGA_COLOR_GREEN, VGA_COLOR.VGA_COLOR_BLACK),
 };
 
-fn vgaPutEntry(c: c_char, color: u8, x: usize, y: usize) void
+fn vgaPutEntry(c: u8, color: u8, x: usize, y: usize) void
 {
 	vga.VGA_terminal_buffer[y * vga.VGA_WIDTH + x] = vgaGetVal(c, color);
 }
 
-fn vgaPutChar(c: c_char) void
+pub fn vgaPutChar(c: u8) void
 {
 	vgaPutEntry(c, vga.VGA_terminal_color);
 	vga.VGA_terminal_column += 1;
@@ -61,6 +61,31 @@ fn vgaPutChar(c: c_char) void
 		if(vga.VGA_terminal_row == vga.VGA_HEIGHT)
 			vga.VGA_terminal_row == 0;
 	}
+}
+
+pub fn putCharAt(c: u8, x: usize, y: usize) void
+{
+	vga.VGA_terminal_buffer[y * vga.VGA_WIDTH + x] = vgaGetVal(c, vga.VGA_terminal_color);
+}
+
+pub fn vgaPutString(string: []const u8) void
+{
+	for (string) |c|
+	{
+		vgaPutChar(c);
+	}
+}
+pub fn vgaClear(color: VGA_COLOR) void
+{
+	for (0..vga.VGA_HEIGHT) |i|
+	{
+		for (0..vga.VGA_WIDTH) |j|
+		{
+			vga.VGA_terminal_buffer[i * vga.VGA_WIDTH + j] = vgaGetVal(' ', @intFromEnum(color));
+		}
+	}
+	vga.VGA_terminal_column = 0;
+	vga.VGA_terminal_row = 0;
 }
 
 pub fn vgaInit() void

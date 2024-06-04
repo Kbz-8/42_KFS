@@ -1,7 +1,3 @@
-const vga_buffer: [*]volatile u16 = @ptrFromInt(0xB8000);
-    vga_buffer[0] = 0xF0 << 8 | @as(u16, '4');
-    vga_buffer[1] = 0xF0 << 8 | @as(u16, '2');
-
 const VGA_COLOR = enum
 {
 	VGA_COLOR_BLACK = 0,

@@ -45,23 +45,23 @@ var vga = VGA_TERMINAL
 	.VGA_terminal_color = vgaColor(VGA_COLOR.VGA_COLOR_GREEN, VGA_COLOR.VGA_COLOR_BLACK),
 };
 
-fn vgaPutEntry(c: c_char, color: u8, x: usize, y: usize)
+fn vgaPutEntry(c: c_char, color: u8, x: usize, y: usize) void
 {
 	vga.VGA_terminal_buffer[y * VGA_WIDTH + x] = vgaGetVal(c, color);
 }
 
-fn vgaPutChar(c: c_char)
+fn vgaPutChar(c: c_char) void
 {
 	vgaPutEntry(c, vga.VGA_terminal_color);
-	if (++vga.VGA_terminal_column == VGA_WIDTH)
+	if(vga.VGA_terminal_column == VGA_WIDTH)
 	{
 		vga.VGA_terminal_column == 0;
-		if (++vga.VGA_terminal_row == VGA_HEIGHT)
+		if(vga.VGA_terminal_row == VGA_HEIGHT)
 			vga.VGA_terminal_row == 0;
 	}
 }
 
-pub fn vgaInit() noreturn
+pub fn vgaInit() void
 {
 	for (0..vga.VGA_HEIGHT) |i|
 	{

@@ -55,7 +55,7 @@ export fn vgaInit() noreturn
 	{
 		for (0..vga.VGA_WIDTH) |j|
 		{
-			VGA_terminal_buffer = vga_print(' ', VGA_COLOR_BLACK);
+			VGA_terminal_buffer[i * VGA_WIDTH + j] = vga_print(' ', VGA_COLOR_BLACK);
 		}
 	}
 }

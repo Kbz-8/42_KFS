@@ -19,5 +19,9 @@ export fn kmain() void
 {
 	drivers.initDrivers();
 	drivers.vga.vgaPutString("caca pipi partout mdr");
+	drivers.vga.vgaPutChar('f');
+	drivers.vga.vgaClear(drivers.vga.VGA_COLOR.VGA_COLOR_RED);
+	drivers.vga.vgaPutChar('b');
+	drivers.vga.vgaPutString("caca pipi partout mdr");
 	drivers.shutdownDrivers();
 }

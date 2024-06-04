@@ -1,4 +1,4 @@
-pub const VGA_COLOR = enum(u16)
+pub const VGA_COLOR = enum(u8)
 {
 	VGA_COLOR_BLACK = 0,
 	VGA_COLOR_BLUE = 1,
@@ -28,14 +28,14 @@ const VGA_TERMINAL = struct
 	VGA_terminal_buffer: [*]volatile u16 = @ptrFromInt(0xB8000),
 };
 
-fn vgaColor(fg: VGA_COLOR, bg: VGA_COLOR) u16
+fn vgaColor(fg: VGA_COLOR, bg: VGA_COLOR) u8
 {
 	return @intFromEnum(fg) | @intFromEnum(bg) << 4;
 }
 
-fn vgaGetVal(uc: u16, color: u8) u16
+fn vgaGetVal(uc: u16, color: u16) u16
 {
-	return uc | @as(u16, color) << 8;
+	return uc | color << 8;
 }
 
 var vga = VGA_TERMINAL
@@ -43,6 +43,7 @@ var vga = VGA_TERMINAL
 	.VGA_terminal_row = 0,
 	.VGA_terminal_column = 0,
 	.VGA_terminal_color = vgaColor(VGA_COLOR.VGA_COLOR_GREEN, VGA_COLOR.VGA_COLOR_BLACK),
+	
 };
 
 fn vgaPutEntry(c: u8, color: u8, x: usize, y: usize) void
@@ -53,13 +54,13 @@ fn vgaPutEntry(c: u8, color: u8, x: usize, y: usize) void
 pub fn vgaPutChar(c: u8) void
 {
 	vgaPutEntry(c, vga.VGA_terminal_color, vga.VGA_terminal_row, vga.VGA_terminal_column);
-	vga.VGA_terminal_column += 1;
-	if(vga.VGA_terminal_column == vga.VGA_WIDTH)
+	vga.VGA_terminal_row += 1;
+	if(vga.VGA_terminal_row == vga.VGA_WIDTH)
 	{
-		vga.VGA_terminal_column = 0;
-		vga.VGA_terminal_row += 1;
-		if(vga.VGA_terminal_row == vga.VGA_HEIGHT)
-			vga.VGA_terminal_row = 0;
+		vga.VGA_terminal_row = 0;
+		vga.VGA_terminal_column += 1;
+		if(vga.VGA_terminal_column == vga.VGA_HEIGHT)
+			vga.VGA_terminal_column = 0;
 	}
 }
 
@@ -75,13 +76,20 @@ pub fn vgaPutString(string: []const u8) void
 		vgaPutChar(c);
 	}
 }
+
+pub fn vgaSetColor(fg: VGA_COLOR, bg: VGA_COLOR) void
+{
+	vga.VGA_terminal_fg = fg;
+	vga.VGA_terminal_bg = bg;
+	vga.VGA_terminal_color = vgaColor(fg, bg);
+}
 pub fn vgaClear(color: VGA_COLOR) void
 {
 	for (0..vga.VGA_HEIGHT) |i|
 	{
 		for (0..vga.VGA_WIDTH) |j|
 		{
-			vga.VGA_terminal_buffer[i * vga.VGA_WIDTH + j] = vgaGetVal(' ', @intFromEnum(color));
+			vga.VGA_terminal_buffer[i * vga.VGA_WIDTH + j] = vgaGetVal(' ', vgaColor(VGA_COLOR.VGA_COLOR_WHITE, color));
 		}
 	}
 	vga.VGA_terminal_column = 0;

@@ -56,10 +56,10 @@ pub fn vgaPutChar(c: u8) void
 	vga.VGA_terminal_column += 1;
 	if(vga.VGA_terminal_column == vga.VGA_WIDTH)
 	{
-		vga.VGA_terminal_column == 0;
+		vga.VGA_terminal_column = 0;
 		vga.VGA_terminal_row += 1;
 		if(vga.VGA_terminal_row == vga.VGA_HEIGHT)
-			vga.VGA_terminal_row == 0;
+			vga.VGA_terminal_row = 0;
 	}
 }
 

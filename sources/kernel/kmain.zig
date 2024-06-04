@@ -13,9 +13,11 @@ comptime
 	}
 }
 
-const vga = @import("drivers").vga;
+const drivers = @import("drivers");
 
 export fn kmain() void
 {
-	vga.vgaInit();
+	drivers.initDrivers();
+	drivers.vga.vgaPutString("caca pipi partout mdr");
+	drivers.shutdownDrivers();
 }

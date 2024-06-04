@@ -37,14 +37,25 @@ fn vga_color(fg: VGA_COLOR, bg: VGA_COLOR) u16
 	return (fg | bg << 4);
 }
 
+fn vga_print(uc: c_ushort, color: u8) u16
+{
+	return (@as(u16, uc) | @as(u16, color << 8))
+}
+
 var vga = VGA_TERMINAL
 {
 	.VGA_terminal_row = 0;
 	.VGA_terminal_column = 0;
-	.VGA_terminal_color
+	.VGA_terminal_color = vga_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK);
 };
 
 export fn vgaInit() noreturn
 {
-
+	for (0..vga.VGA_HEIGHT) |i|
+	{
+		for (0..vga.VGA_WIDTH) |j|
+		{
+			VGA_terminal_buffer = vga_print(' ', VGA_COLOR_BLACK);
+		}
+	}
 }

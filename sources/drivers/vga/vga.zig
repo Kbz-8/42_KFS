@@ -52,7 +52,7 @@ fn vgaPutEntry(c: u8, color: u8, x: usize, y: usize) void
 
 pub fn vgaPutChar(c: u8) void
 {
-	vgaPutEntry(c, vga.VGA_terminal_color);
+	vgaPutEntry(c, vga.VGA_terminal_color, vga.VGA_terminal_row, vga.VGA_terminal_column);
 	vga.VGA_terminal_column += 1;
 	if(vga.VGA_terminal_column == vga.VGA_WIDTH)
 	{

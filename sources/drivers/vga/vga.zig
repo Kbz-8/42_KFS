@@ -32,12 +32,12 @@ const VGA_TERMINAL = struct
 	VGA_terminal_buffer: [*]volatile u16 = @ptrFromInt(0xB8000),
 }
 
-fn vga_color(fg: VGA_COLOR, bg: VGA_COLOR) u16
+fn vgaColor(fg: VGA_COLOR, bg: VGA_COLOR) u16
 {
 	return (fg | bg << 4);
 }
 
-fn vga_print(uc: c_ushort, color: u8) u16
+fn vgaGetVal(uc: c_ushort, color: u8) u16
 {
 	return (@as(u16, uc) | @as(u16, color << 8))
 }
@@ -46,16 +46,16 @@ var vga = VGA_TERMINAL
 {
 	.VGA_terminal_row = 0;
 	.VGA_terminal_column = 0;
-	.VGA_terminal_color = vga_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK);
+	.VGA_terminal_color = vgaColor(VGA_COLOR_GREEN, VGA_COLOR_BLACK);
 };
 
-export fn vgaInit() noreturn
+pub fn vgaInit() noreturn
 {
 	for (0..vga.VGA_HEIGHT) |i|
 	{
 		for (0..vga.VGA_WIDTH) |j|
 		{
-			VGA_terminal_buffer[i * VGA_WIDTH + j] = vga_print(' ', VGA_COLOR_BLACK);
+			VGA_terminal_buffer[i * VGA_WIDTH + j] = vgaGetVal(' ', VGA_COLOR_BLACK);
 		}
 	}
 }

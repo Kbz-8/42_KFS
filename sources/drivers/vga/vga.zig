@@ -53,9 +53,11 @@ fn vgaPutEntry(c: c_char, color: u8, x: usize, y: usize) void
 fn vgaPutChar(c: c_char) void
 {
 	vgaPutEntry(c, vga.VGA_terminal_color);
+	vga.VGA_terminal_column += 1;
 	if(vga.VGA_terminal_column == VGA_WIDTH)
 	{
 		vga.VGA_terminal_column == 0;
+		vga.VGA_terminal_row += 1;
 		if(vga.VGA_terminal_row == VGA_HEIGHT)
 			vga.VGA_terminal_row == 0;
 	}

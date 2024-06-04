@@ -30,7 +30,7 @@ const VGA_TERMINAL = struct
 	VGA_terminal_column: usize,
 	VGA_terminal_color: u8,
 	VGA_terminal_buffer: [*]volatile u16 = @ptrFromInt(0xB8000),
-}
+};
 
 fn vgaColor(fg: VGA_COLOR, bg: VGA_COLOR) u16
 {
@@ -39,15 +39,31 @@ fn vgaColor(fg: VGA_COLOR, bg: VGA_COLOR) u16
 
 fn vgaGetVal(uc: c_ushort, color: u8) u16
 {
-	return (@as(u16, uc) | @as(u16, color << 8))
+	return (@as(u16, uc) | @as(u16, color << 8));
 }
 
 var vga = VGA_TERMINAL
 {
-	.VGA_terminal_row = 0;
-	.VGA_terminal_column = 0;
-	.VGA_terminal_color = vgaColor(VGA_COLOR_GREEN, VGA_COLOR_BLACK);
+	.VGA_terminal_row = 0,
+	.VGA_terminal_column = 0,
+	.VGA_terminal_color = vgaColor(VGA_COLOR.VGA_COLOR_GREEN, VGA_COLOR.VGA_COLOR_BLACK),
 };
+
+fn vgaPutEntry(c: c_char, color: u8, x: usize, y: usize)
+{
+	vga.VGA_terminal_buffer[y * VGA_WIDTH + x] = vgaGetVal(c, color);
+}
+
+fn vgaPutChar(c: c_char)
+{
+	vgaPutEntry(c, vga.VGA_terminal_color);
+	if (++vga.VGA_terminal_column == VGA_WIDTH)
+	{
+		vga.VGA_terminal_column == 0;
+		if (++vga.VGA_terminal_row == VGA_HEIGHT)
+			vga.VGA_terminal_row == 0;
+	}
+}
 
 pub fn vgaInit() noreturn
 {
@@ -55,7 +71,7 @@ pub fn vgaInit() noreturn
 	{
 		for (0..vga.VGA_WIDTH) |j|
 		{
-			VGA_terminal_buffer[i * VGA_WIDTH + j] = vgaGetVal(' ', VGA_COLOR_BLACK);
+			VGA_terminal_buffer[i * VGA_WIDTH + j] = vgaGetVal(' ', VGA_COLOR.VGA_COLOR_BLACK);
 		}
 	}
 }

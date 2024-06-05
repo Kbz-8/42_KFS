@@ -1,108 +1,99 @@
-pub const VGA_COLOR = enum(u8)
+pub const Color = enum(u8)
 {
-	VGA_COLOR_BLACK = 0,
-	VGA_COLOR_BLUE = 1,
-	VGA_COLOR_GREEN = 2,
-	VGA_COLOR_CYAN = 3,
-	VGA_COLOR_RED = 4,
-	VGA_COLOR_MAGENTA = 5,
-	VGA_COLOR_BROWN = 6,
-	VGA_COLOR_LIGHT_GREY = 7,
-	VGA_COLOR_DARK_GREY = 8,
-	VGA_COLOR_LIGHT_BLUE = 9,
-	VGA_COLOR_LIGHT_GREEN = 10,
-	VGA_COLOR_LIGHT_CYAN = 11,
-	VGA_COLOR_LIGHT_RED = 12,
-	VGA_COLOR_LIGHT_MAGENTA = 13,
-	VGA_COLOR_LIGHT_BROWN = 14,
-	VGA_COLOR_WHITE = 15,
+	BLACK = 0,
+	BLUE = 1,
+	GREEN = 2,
+	CYAN = 3,
+	RED = 4,
+	MAGENTA = 5,
+	BROWN = 6,
+	LIGHT_GREY = 7,
+	DARK_GREY = 8,
+	LIGHT_BLUE = 9,
+	LIGHT_GREEN = 10,
+	LIGHT_CYAN = 11,
+	LIGHT_RED = 12,
+	LIGHT_MAGENTA = 13,
+	LIGHT_BROWN = 14,
+	WHITE = 15,
 };
 
-const VGA_TERMINAL = struct
+const VGA = struct
 {
-	VGA_HEIGHT: usize = 25,
-	VGA_WIDTH: usize = 80,
-	VGA_terminal_row: usize,
-	VGA_terminal_column: usize,
-	VGA_terminal_color: u8,
-	VGA_terminal_buffer: [*]volatile u16 = @ptrFromInt(0xB8000),
+	height: usize = 25,
+	width: usize = 80,
+	row: usize,
+	column: usize,
+	color: u8,
+	buffer: [*]volatile u16 = @ptrFromInt(0xB8000),
 };
 
-fn vgaColor(fg: VGA_COLOR, bg: VGA_COLOR) u8
+fn computeColor(fg: Color, bg: Color) u8
 {
 	return @intFromEnum(fg) | @intFromEnum(bg) << 4;
 }
 
-fn vgaGetVal(uc: u16, color: u16) u16
+fn getVal(uc: u16, color: u16) u16
 {
 	return uc | color << 8;
 }
 
-var vga = VGA_TERMINAL
+var vga = VGA
 {
-	.VGA_terminal_row = 0,
-	.VGA_terminal_column = 0,
-	.VGA_terminal_color = vgaColor(VGA_COLOR.VGA_COLOR_GREEN, VGA_COLOR.VGA_COLOR_BLACK),
+	.row = 0,
+	.column = 0,
+	.color = computeColor(Color.GREEN, Color.BLACK),
 	
 };
 
-fn vgaPutEntry(c: u8, color: u8, x: usize, y: usize) void
+fn putEntry(c: u8, color: u8, x: usize, y: usize) void
 {
-	vga.VGA_terminal_buffer[y * vga.VGA_WIDTH + x] = vgaGetVal(c, color);
+	vga.buffer[y * vga.width + x] = getVal(c, color);
 }
 
-pub fn vgaPutChar(c: u8) void
+pub fn putChar(c: u8) void
 {
-	vgaPutEntry(c, vga.VGA_terminal_color, vga.VGA_terminal_row, vga.VGA_terminal_column);
-	vga.VGA_terminal_row += 1;
-	if(vga.VGA_terminal_row == vga.VGA_WIDTH)
+	putEntry(c, vga.color, vga.row, vga.column);
+	vga.row += 1;
+	if(vga.row == vga.width)
 	{
-		vga.VGA_terminal_row = 0;
-		vga.VGA_terminal_column += 1;
-		if(vga.VGA_terminal_column == vga.VGA_HEIGHT)
-			vga.VGA_terminal_column = 0;
+		vga.row = 0;
+		vga.column += 1;
+		if(vga.column == vga.height)
+			vga.column = 0;
 	}
 }
 
 pub fn putCharAt(c: u8, x: usize, y: usize) void
 {
-	vga.VGA_terminal_buffer[y * vga.VGA_WIDTH + x] = vgaGetVal(c, vga.VGA_terminal_color);
+	vga.buffer[y * vga.width + x] = getVal(c, vga.color);
 }
 
-pub fn vgaPutString(string: []const u8) void
+pub fn putString(string: []const u8) void
 {
 	for (string) |c|
-	{
-		vgaPutChar(c);
-	}
+		putChar(c);
 }
 
-pub fn vgaSetColor(fg: VGA_COLOR, bg: VGA_COLOR) void
+pub fn setColor(fg: Color, bg: Color) void
 {
-	vga.VGA_terminal_fg = fg;
-	vga.VGA_terminal_bg = bg;
-	vga.VGA_terminal_color = vgaColor(fg, bg);
-}
-pub fn vgaClear(color: VGA_COLOR) void
-{
-	for (0..vga.VGA_HEIGHT) |i|
-	{
-		for (0..vga.VGA_WIDTH) |j|
-		{
-			vga.VGA_terminal_buffer[i * vga.VGA_WIDTH + j] = vgaGetVal(' ', vgaColor(VGA_COLOR.VGA_COLOR_WHITE, color));
-		}
-	}
-	vga.VGA_terminal_column = 0;
-	vga.VGA_terminal_row = 0;
+	vga.fg = fg;
+	vga.bg = bg;
+	vga.color = computeColor(fg, bg);
 }
 
-pub fn vgaInit() void
+pub fn clear(color: Color) void
 {
-	for (0..vga.VGA_HEIGHT) |i|
+	for (0..vga.height) |i|
 	{
-		for (0..vga.VGA_WIDTH) |j|
-		{
-			vga.VGA_terminal_buffer[i * vga.VGA_WIDTH + j] = vgaGetVal(' ', @intFromEnum(VGA_COLOR.VGA_COLOR_BLACK));
-		}
+		for (0..vga.width) |j|
+			vga.buffer[i * vga.width + j] = getVal(' ', computeColor(Color.WHITE, color));
 	}
+	vga.column = 0;
+	vga.row = 0;
+}
+
+pub fn init() void
+{
+        clear(Color.BLACK);
 }

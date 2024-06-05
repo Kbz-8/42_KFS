@@ -18,10 +18,10 @@ const drivers = @import("drivers");
 export fn kmain() void
 {
 	drivers.initDrivers();
-	drivers.vga.vgaPutString("caca pipi partout mdr");
-	drivers.vga.vgaPutChar('f');
-	drivers.vga.vgaClear(drivers.vga.VGA_COLOR.VGA_COLOR_RED);
-	drivers.vga.vgaPutChar('b');
-	drivers.vga.vgaPutString("caca pipi partout mdr");
+	drivers.vga.putString("caca pipi partout mdr");
+	drivers.vga.putChar('f');
+	drivers.vga.clear(drivers.vga.Color.RED);
+	drivers.vga.putChar('b');
+	drivers.vga.putString("caca pipi partout mdr");
 	drivers.shutdownDrivers();
 }

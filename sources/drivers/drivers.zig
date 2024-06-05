@@ -3,7 +3,7 @@ pub const keyboard = @import("keyboard/keyboard.zig");
 
 pub fn initDrivers() void
 {
-	 vga.vgaInit();
+	 vga.init();
 }
 
 pub fn shutdownDrivers() void

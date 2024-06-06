@@ -12,7 +12,6 @@ pub fn build(b: *std.Build) void
         }),
         .optimize = b.standardOptimizeOption(.{}),
     });
-    kernel.addIncludePath(.{ .path = "sources/libc/includes" });
     kernel.setLinkerScriptPath(.{ .path = "linker.ld" });
 
     const drivers = b.addModule("drivers", .{
@@ -25,21 +24,21 @@ pub fn build(b: *std.Build) void
     const kernel_step = b.step("kernel", "Build the kernel");
     kernel_step.dependOn(&kernel.step);
 
-    const iso_dir = b.fmt("{s}/", .{b.exe_dir});
-    const kernel_path = b.fmt("{s}/kernel.elf", .{b.exe_dir});
+    const iso_dir = b.fmt("{s}", .{b.exe_dir});
     const iso_path = b.fmt("{s}/disk.iso", .{b.exe_dir});
+    const kernel_path = b.fmt("{s}/kernel.elf", .{b.exe_dir});
 
     const iso_cmd_str = &[_][]const u8
     {
-        "/bin/sh", "-c",
+        "/bin/bash", "-c",
         std.mem.concat(b.allocator, u8, &[_][]const u8
         {
-            "mkdir -p ", iso_dir, "/boot/ && ",
+            "mkdir -p ", iso_dir, "/boot/grub && ",
             "cp ", kernel_path, " ", iso_dir, "/boot/ && ",
-            "cp sources/grub/grub.cfg ", iso_dir, "/boot/ && ",
+            "cp sources/grub/grub.cfg ", iso_dir, "/boot/grub/ && ",
             "grub-mkrescue -o ", iso_path, " ", iso_dir
         })
-        catch unreachable 
+        catch unreachable
     };
 
     const iso_cmd = b.addSystemCommand(iso_cmd_str);
@@ -49,7 +48,7 @@ pub fn build(b: *std.Build) void
     iso_step.dependOn(&iso_cmd.step);
     b.default_step.dependOn(iso_step);
 
-    const run_cmd_str = &[_][]const u8{ "qemu-system-i386", "-kernel", kernel_path, "-machine", "type=pc-i440fx-3.1" };
+    const run_cmd_str = &[_][]const u8{ "qemu-system-i386", "-cdrom", iso_path, "-machine", "type=pc-i440fx-3.1" };
 
     const run_cmd = b.addSystemCommand(run_cmd_str);
     run_cmd.step.dependOn(b.getInstallStep());

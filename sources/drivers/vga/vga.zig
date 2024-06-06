@@ -42,7 +42,7 @@ var vga = VGA
 {
 	.row = 0,
 	.column = 0,
-	.color = computeColor(Color.GREEN, Color.BLACK),
+	.color = computeColor(Color.WHITE, Color.BLACK),
 	
 };
 
@@ -77,8 +77,6 @@ pub fn putString(string: []const u8) void
 
 pub fn setColor(fg: Color, bg: Color) void
 {
-	vga.fg = fg;
-	vga.bg = bg;
 	vga.color = computeColor(fg, bg);
 }
 

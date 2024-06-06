@@ -15,12 +15,12 @@ comptime
 
 const drivers = @import("drivers");
 const io = @import("io/io.zig");
-const kpanic = @import("panic.zig").kpanic;
+//const kpanic = @import("panic.zig").kpanic;
 
 export fn kmain() void
 {
     drivers.initDrivers();
-    io.out.kprintf("test {} yipi, {}", .{ 'a', 42 });
-    kpanic("test");
+    io.out.kprintf("test '{c}' yipi, {i}", .{ 'a', 42 });
+    //kpanic("Quelqu'un a crotte les chiottes de 42 !");
     drivers.shutdownDrivers();
 }

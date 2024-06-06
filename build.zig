@@ -25,7 +25,7 @@ pub fn build(b: *std.Build) void
     kernel_step.dependOn(&kernel.step);
 
     const iso_dir = b.fmt("{s}", .{b.exe_dir});
-    const iso_path = b.fmt("{s}/disk.iso", .{b.exe_dir});
+    const iso_path = b.fmt("{s}/ratiOS.iso", .{b.exe_dir});
     const kernel_path = b.fmt("{s}/kernel.elf", .{b.exe_dir});
 
     const iso_cmd_str = &[_][]const u8
@@ -34,7 +34,7 @@ pub fn build(b: *std.Build) void
         std.mem.concat(b.allocator, u8, &[_][]const u8
         {
             "mkdir -p ", iso_dir, "/boot/grub && ",
-            "cp ", kernel_path, " ", iso_dir, "/boot/ && ",
+            "mv ", kernel_path, " ", iso_dir, "/boot/ && ",
             "cp sources/grub/grub.cfg ", iso_dir, "/boot/grub/ && ",
             "grub-mkrescue -o ", iso_path, " ", iso_dir
         })

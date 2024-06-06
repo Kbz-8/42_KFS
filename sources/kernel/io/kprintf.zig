@@ -1,5 +1,4 @@
 const vga = @import("drivers").vga;
-const kpanic = @import("../panic.zig").kpanic;
 
 const ArgTypes = enum
 {
@@ -29,6 +28,8 @@ pub fn kprintf(comptime fmt: []const u8, args: anytype) void
         {
             if(c == '}')
             {
+                if(arg_type == .Null)
+                    @compileError("invalid type identifier between the brackets");
                 printArg(args[arg_idx], arg_type);
 
                 arg_insert = false;
@@ -71,7 +72,7 @@ fn printArg(arg: anytype, T: ArgTypes) void
         .Float => {},
         .String => {},
         .Pointer => {},
-        else => kpanic("kprintf : invalid type identifier between the brackets"),
+        else => {},
     }
 }
 

@@ -10,14 +10,16 @@ pub fn build(b: *std.Build) void
             .abi = .none,
             .os_tag = .freestanding,
         }),
-        .optimize = b.standardOptimizeOption(.{}),
+        .optimize = .Debug
     });
     kernel.setLinkerScriptPath(.{ .path = "linker.ld" });
 
-    const drivers = b.addModule("drivers", .{
-        .root_source_file = .{ .path = "sources/drivers/drivers.zig" }
+    const drivers_module = b.addModule("drivers", .{
+        .root_source_file = .{ .path = "sources/drivers/index.zig" }
     });
-    kernel.root_module.addImport("drivers", drivers);
+
+    drivers_module.addImport("kernel", &kernel.root_module);
+    kernel.root_module.addImport("drivers", drivers_module);
 
     b.installArtifact(kernel);
 

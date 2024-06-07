@@ -1,5 +1,10 @@
 const vga = @import("drivers").vga;
 
+pub fn kputs(message: []const u8) void
+{
+    vga.putString(message);
+}
+
 const ArgTypes = enum
 {
     Int,

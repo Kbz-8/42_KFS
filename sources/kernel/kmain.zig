@@ -14,13 +14,17 @@ comptime
 }
 
 const drivers = @import("drivers");
-const io = @import("io/io.zig");
-//const kpanic = @import("panic.zig").kpanic;
+
+pub const logs = @import("log.zig");
+pub const kpanic = @import("panic.zig").kpanic;
+pub const out = @import("io/out.zig");
 
 export fn kmain() void
 {
+    @setCold(true);
+    logs.initLogger();
     drivers.initDrivers();
-    io.out.kprintf("test '{c}' yipi, {i}", .{ 'a', 42 });
-    //kpanic("Quelqu'un a crotte les chiottes de 42 !");
+    out.kputs("Welcome to RatiOS ! (just to respect the kfs-1 subject : 42)");
+    //kpanic("test");
     drivers.shutdownDrivers();
 }

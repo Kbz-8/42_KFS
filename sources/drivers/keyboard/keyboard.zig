@@ -1,6 +1,6 @@
 
-/// The position of a key on a keyboard using the qwerty layout. This does not determine the key pressed, just the position on the keyboard.
-pub const KeyPosition = enum(u8) {
+const QwertyLayout = enum(u8)
+{
     ESC,
     F1,
     F2,

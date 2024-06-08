@@ -1,5 +1,5 @@
 pub const vga = @import("vga/vga.zig");
-pub const keyboard = @import("keyboard/keyboard.zig");
+pub const kb = @import("keyboard/keyboard.zig");
 
 const kernel = @import("kernel");
 
@@ -8,6 +8,7 @@ pub fn initDrivers() void
     @setCold(true);
     kernel.logs.klog("[Drivers Manager] loading drivers...");
     vga.init();
+    kb.init();
     kernel.logs.klog("[Drivers Manager] loaded all drivers");
 }
 

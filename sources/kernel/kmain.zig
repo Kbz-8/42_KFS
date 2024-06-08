@@ -17,14 +17,16 @@ const drivers = @import("drivers");
 
 pub const logs = @import("log.zig");
 pub const kpanic = @import("panic.zig").kpanic;
-pub const out = @import("io/out.zig");
+pub const console = @import("io/out.zig");
+pub const ports = @import("ports/ports.zig");
+pub const ipc = @import("ipc.zig");
 
 export fn kmain() void
 {
     @setCold(true);
     logs.initLogger();
     drivers.initDrivers();
-    out.kputs("Welcome to RatiOS ! (just to respect the kfs-1 subject : 42)");
-    //kpanic("test");
+    console.kputs("Welcome to RatiOS ! (just to respect the kfs-1 subject : 42)");
+    kpanic("test");
     drivers.shutdownDrivers();
 }

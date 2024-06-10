@@ -2,7 +2,7 @@ const BUFFER_SIZE: usize = 4096;
 
 const Logger = struct
 {
-    buffer: [BUFFER_SIZE]u8 = undefined,
+    buffer: [BUFFER_SIZE]u8 = .{0} ** BUFFER_SIZE,
     current_index: usize = 0,
 
     fn shiftBuffer(self: *Logger, size: usize) void
@@ -39,11 +39,4 @@ pub fn klog(message: []const u8) void
 pub fn getLogBuffer() *[BUFFER_SIZE]u8
 {
     return &logger.buffer;
-}
-
-pub fn initLogger() void
-{
-    @setCold(true);
-    for(0..BUFFER_SIZE) |i|
-        logger.buffer[i] = 0;
 }

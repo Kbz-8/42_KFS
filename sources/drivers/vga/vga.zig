@@ -61,6 +61,8 @@ var vga = VGA
 
 pub fn changeScreen(targetScreen: u8) void
 {
+	if (targetScreen == vga.currentScreen or targetScreen < 0 or targetScreen >= 8)
+		return;
 	for (vga.buffer, 0..) |val, i|
 		vga.screensArray[vga.currentScreen].buffer[i] = val;
 
@@ -98,6 +100,7 @@ pub fn reverseScroll() void
 		vga.buffer[y] = 0;
 	}
 }
+
 pub fn scroll() void
 {
 	for (1..vga.height) |x|
@@ -115,18 +118,19 @@ pub fn scroll() void
 
 pub fn putChar(c: u8) void
 {
-    if(c == 0)
+    if (c == 0)
         return;
-    if(c >= ' ')
+    if (c >= ' ')
         putEntry(c, vga.color, vga.row, vga.column);
     vga.row += 1;
-    if(vga.row == vga.width or c == '\n')
+    if (vga.row == vga.width or c == '\n')
     {
         vga.row = 0;
         vga.column += 1;
-        if(vga.column == vga.height)
+        if (vga.column == vga.height)
             scroll();
     }
+	
 }
 
 pub fn putCharAt(c: u8, x: usize, y: usize) void

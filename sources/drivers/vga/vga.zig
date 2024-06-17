@@ -52,6 +52,20 @@ fn putEntry(c: u8, color: u8, x: usize, y: usize) void
     vga.buffer[y * vga.width + x] = getVal(c, color);
 }
 
+pub fn reverseScroll() void
+{
+	for (0..(vga.height - 1)) |x|
+	{
+		for (0..vga.width) |y|
+		{
+			vga.buffer[x * vga.width + y] = vga.buffer[(x + 1) * vga.width + y];
+		}
+	}
+	for (0..vga.width) |y|
+	{
+		vga.buffer[y] = 0;
+	}
+}
 pub fn scroll() void
 {
 	for (1..vga.height) |x|

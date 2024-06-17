@@ -20,6 +20,14 @@ pub const Color = enum(u8)
     WHITE = 15,
 };
 
+const Screen = struct
+{
+    row: usize,
+    column: usize,
+    color: u8,
+	var buffer = [2000]u16;
+};
+
 const VGA = struct
 {
     height: usize = 25,
@@ -28,6 +36,8 @@ const VGA = struct
     column: usize,
     color: u8,
     buffer: [*]volatile u16 = @ptrFromInt(0xB8000),
+	screensArray: [8]Screen,
+	currentScreen: u8,
 };
 
 fn computeColor(fg: Color, bg: Color) u8
@@ -45,7 +55,34 @@ var vga = VGA
     .row = 0,
     .column = 0,
     .color = computeColor(Color.WHITE, Color.BLACK),
+	.screensArray =.{.{.row = 0, .column = 0, .color = computeColor(Color.WHITE, Color.BLACK)}} ** 8,
+	.currentScreen = 0,
 };
+
+pub fn changeScreen(targetScreen: u8) void
+{
+	if (targetScreen > 7)
+		return;
+
+	for (vga.buffer, 0..) |val, i|
+		vga.screensArray[vga.currentScreen].buffer[i] = val;
+
+	vga.screensArray[vga.currentScreen].copy(vga.row, vga.column, vga.color);
+
+	vga.screensArray[vga.currentScreen].row = vga.row;
+	vga.screensArray[vga.currentScreen].column = vga.column;
+	vga.screensArray[vga.currentScreen].color = vga.color;
+	
+	for (vga.screensArray[targetScreen].buffer, 0..) |val, i|
+		vga.buffer[i] = val;
+
+	vga.row = vga.screensArray[targetScreen].row;
+	vga.column = vga.screensArray[targetScreen].column;
+	vga.color = vga.screensArray[targetScreen].color;
+	vga.currentScreen = targetScreen;
+
+	return;
+}
 
 fn putEntry(c: u8, color: u8, x: usize, y: usize) void
 {
@@ -130,5 +167,6 @@ pub fn init() void
 {
     kernel.logs.klog("[VGA Driver] loading...");
     clear(Color.BLACK);
+
     kernel.logs.klog("[VGA Driver] loaded");
 }

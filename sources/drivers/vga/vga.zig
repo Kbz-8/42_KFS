@@ -61,13 +61,8 @@ var vga = VGA
 
 pub fn changeScreen(targetScreen: u8) void
 {
-	if (targetScreen > 7)
-		return;
-
 	for (vga.buffer, 0..) |val, i|
 		vga.screensArray[vga.currentScreen].buffer[i] = val;
-
-	vga.screensArray[vga.currentScreen].copy(vga.row, vga.column, vga.color);
 
 	vga.screensArray[vga.currentScreen].row = vga.row;
 	vga.screensArray[vga.currentScreen].column = vga.column;

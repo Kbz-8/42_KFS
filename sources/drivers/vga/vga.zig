@@ -52,6 +52,21 @@ fn putEntry(c: u8, color: u8, x: usize, y: usize) void
     vga.buffer[y * vga.width + x] = getVal(c, color);
 }
 
+pub fn scroll() void
+{
+	for (1..vga.height) |x|
+	{
+		for (0..vga.width) |y|
+		{
+			vga.buffer[(x - 1) * vga.width + y] = vga.buffer[x * vga.width + y];
+		}
+	}
+	for (0..vga.width) |y|
+	{
+		vga.buffer[vga.height * vga.width + y] = 0;
+	}
+}
+
 pub fn putChar(c: u8) void
 {
     if(c == 0)
@@ -64,7 +79,7 @@ pub fn putChar(c: u8) void
         vga.row = 0;
         vga.column += 1;
         if(vga.column == vga.height)
-            vga.column = 0;
+            scroll();
     }
 }
 

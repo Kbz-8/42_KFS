@@ -73,12 +73,13 @@ const Keycodes = enum(u8)
     ENTER_RELEASED = 0x9C,
 };
 
-var keycache: [256]u8 = .{0} ** 256;
+var keybuffer: [256]u8 = .{0} ** 256;
 
 pub fn init() void
 {
     @setCold(true);
     kernel.logs.klog("[PS/2 Keyboard Driver] loading...");
+
     kernel.logs.klog("[PS/2 Keyboard Driver] loaded");
 }
 

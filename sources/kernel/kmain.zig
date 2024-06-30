@@ -18,8 +18,8 @@ const drivers = @import("drivers");
 pub const logs = @import("log.zig");
 pub const kpanic = @import("panic.zig").kpanic;
 pub const console = @import("io/out.zig");
-pub const ports = @import("ports/ports.zig");
-pub const int = @import("interrupts/int.zig");
+// pub const ports = @import("ports/ports.zig");
+// pub const int = @import("interrupts/int.zig"); 
 
 export fn kmain() void
 {

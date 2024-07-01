@@ -11,7 +11,7 @@ pub fn build(b: *std.Build) void
             .os_tag = .freestanding,
         }),
         .optimize = .Debug,
-        //.strip = true,
+        .strip = true,
         .code_model = .kernel,
         .pic = false,
         .error_tracing = false,

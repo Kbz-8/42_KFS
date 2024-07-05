@@ -17,7 +17,6 @@ pub fn build(b: *std.Build) void
         .error_tracing = false,
     });
     kernel.setLinkerScriptPath(.{ .path = "linker.ld" });
-    kernel.addAssemblyFile(.{ .path = "sources/kernel/interrupts/idt.s" });
 
     const drivers_module = b.addModule("drivers", .{
         .root_source_file = .{ .path = "sources/drivers/index.zig" }

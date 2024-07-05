@@ -204,16 +204,148 @@ pub fn outPortB(port : u16, value : u8) void
         : "memory" );
 }
 
-pub fn isr_handler(regs : *IDT_Register) void
+export fn isr_handler(regs : *IDT_Register) void
 {
 	if (regs.int_nb < 32)
 	{
 		out.kputs(error_messages[regs.int_nb]); // todo: put kernel panic
 	}
-
 }
 
+fn isr_common_stub() void
+{
+	comptime {
+		asm volatile (
+	\\pusha
+	\\mov eax,ds
+	\\push eax
 
+	\\mov ax, 0x10
+	\\mov ds, ax
+	\\mov es, ax
+	\\mov fs, ax
+	\\mov gs, ax
+
+	\\push esp
+	\\call isr_handler
+
+	\\add esp, 8
+	\\pop ebx
+	\\mov ds, bx
+	\\mov es, bx
+	\\mov fs, bx
+	\\mov gs, bx
+
+	\\popa
+	\\add esp, 8
+	\\sti
+	\\iret
+	);
+	}
+}
+
+comptime (
+	asm volatile {
+	\\.macro isr_generate i
+	\\.align 4
+	\\.type isr\i, @function
+	\\.global isr\i
+
+	\\isr\i:
+	\\.if (\i != 8 && !(\i >= 10 && \i <= 14) && \i != 17)
+	\\	push $0
+	\\.endif
+	\\push $\i
+	\\jmp isr_common_stub
+	\\.endmacro
+	\\isr_generate 0
+	\\ isr_generate 1
+	\\ isr_generate 2
+	\\ isr_generate 3
+	\\ isr_generate 4
+	\\ isr_generate 5
+	\\ isr_generate 6
+	\\ isr_generate 7
+	\\ isr_generate 8
+	\\ isr_generate 9
+	\\ isr_generate 10
+	\\ isr_generate 11
+	\\ isr_generate 12
+	\\ isr_generate 13
+	\\ isr_generate 14
+	\\ isr_generate 15
+	\\ isr_generate 16
+	\\ isr_generate 17
+	\\ isr_generate 18
+	\\ isr_generate 19
+	\\ isr_generate 20
+	\\ isr_generate 21
+	\\ isr_generate 22
+	\\ isr_generate 23
+	\\ isr_generate 24
+	\\ isr_generate 25
+	\\ isr_generate 26
+	\\ isr_generate 27
+	\\ isr_generate 28
+	\\ isr_generate 29
+	\\ isr_generate 30
+	\\ isr_generate 31
+
+	\\ isr_generate 32
+	\\ isr_generate 33
+	\\ isr_generate 34
+	\\ isr_generate 35
+	\\ isr_generate 36
+	\\ isr_generate 37
+	\\ isr_generate 38
+	\\ isr_generate 39
+	\\ isr_generate 40
+	\\ isr_generate 41
+	\\ isr_generate 42
+	\\ isr_generate 43
+	\\ isr_generate 44
+	\\ isr_generate 45
+	\\ isr_generate 46
+	\\ isr_generate 47
+
+	\\ isr_generate 128
+	\\ isr_generate 177
+	};
+)
+
+fn irq_common_stub() void
+{
+	comptime {
+		asm volatile (
+	\\pusha
+	\\mov eax,ds
+	\\push eax
+	\\mov eax, cr2
+	\\push eax
+
+	\\mov ax, 0x10
+	\\mov ds, ax
+	\\mov es, ax
+	\\mov fs, ax
+	\\mov gs, ax
+
+	\\push esp
+	\\call irq_handler
+
+	\\add esp, 8
+	\\pop ebx
+	\\mov ds, bx
+	\\mov es, bx
+	\\mov fs, bx
+	\\mov gs, bx
+
+	\\popa
+	\\add esp, 8
+	\\sti
+	\\iret
+	);
+	}
+}
 var irq_routines = [_][] const i32 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 fn irq_install_handler(irq : i32, handler : fn(u32) i32) void
@@ -226,7 +358,7 @@ fn irq_uninstall_handler(irq : i32) void
 	irq_routines[irq] = 0;
 }
 
-pub fn irq_handler(regs : *IDT_Register) void
+export fn irq_handler(regs : *IDT_Register) void
 {
 	const handler = irq_routines[regs.int_nb - 32];
 

@@ -1,5 +1,19 @@
 pub const out = @import("io/out.zig");
 
+extern fn  isr0()void; extern fn  isr1()void; extern fn  isr2()void; extern fn  isr3()void;
+extern fn  isr4()void; extern fn  isr5()void; extern fn  isr6()void; extern fn  isr7()void;
+extern fn  isr8()void; extern fn  isr9()void; extern fn isr10()void; extern fn isr11()void;
+extern fn isr12()void; extern fn isr13()void; extern fn isr14()void; extern fn isr15()void;
+extern fn isr16()void; extern fn isr17()void; extern fn isr18()void; extern fn isr19()void;
+extern fn isr20()void; extern fn isr21()void; extern fn isr22()void; extern fn isr23()void;
+extern fn isr24()void; extern fn isr25()void; extern fn isr26()void; extern fn isr27()void;
+extern fn isr28()void; extern fn isr29()void; extern fn isr30()void; extern fn isr31()void;
+extern fn isr32()void; extern fn isr33()void; extern fn isr34()void; extern fn isr35()void;
+extern fn isr36()void; extern fn isr37()void; extern fn isr38()void; extern fn isr39()void;
+extern fn isr40()void; extern fn isr41()void; extern fn isr42()void; extern fn isr43()void;
+extern fn isr44()void; extern fn isr45()void; extern fn isr46()void; extern fn isr47()void;
+extern fn isr128()void; extern fn isr177() void;
+
 const IDT_Entry = packed struct
 {
 	base_low : u16,
@@ -155,22 +169,22 @@ pub fn IDT_init() void
 	IDT_setGate(30, &isr30, 0x08, 0x8E);
 	IDT_setGate(31, &isr31, 0x08, 0x8E);
 
-	IDT_setGate(32, irq0, 0x07, 0x8E);
-	IDT_setGate(33, irq1, 0x07, 0x8E);
-	IDT_setGate(34, irq2, 0x07, 0x8E);
-	IDT_setGate(35, irq3, 0x07, 0x8E);
-	IDT_setGate(36, irq4, 0x07, 0x8E);
-	IDT_setGate(37, irq5, 0x07, 0x8E);
-	IDT_setGate(38, irq6, 0x07, 0x8E);
-	IDT_setGate(39, irq7, 0x07, 0x8E);
-	IDT_setGate(40, irq8, 0x07, 0x8E);
-	IDT_setGate(41, irq9, 0x07, 0x8E);
-	IDT_setGate(42, irq10, 0x07, 0x8E);
-	IDT_setGate(43, irq11, 0x07, 0x8E);
-	IDT_setGate(44, irq12, 0x07, 0x8E);
-	IDT_setGate(45, irq13, 0x07, 0x8E);
-	IDT_setGate(46, irq14, 0x07, 0x8E);
-	IDT_setGate(47, irq15, 0x07, 0x8E);
+	IDT_setGate(32, &isr32, 0x07, 0x8E);
+	IDT_setGate(33, &isr33, 0x07, 0x8E);
+	IDT_setGate(34, &isr34, 0x07, 0x8E);
+	IDT_setGate(35, &isr35, 0x07, 0x8E);
+	IDT_setGate(36, &isr36, 0x07, 0x8E);
+	IDT_setGate(37, &isr37, 0x07, 0x8E);
+	IDT_setGate(38, &isr38, 0x07, 0x8E);
+	IDT_setGate(39, &isr39, 0x07, 0x8E);
+	IDT_setGate(40, &isr40, 0x07, 0x8E);
+	IDT_setGate(41, &isr41, 0x07, 0x8E);
+	IDT_setGate(42, &isr42, 0x07, 0x8E);
+	IDT_setGate(43, &isr43, 0x07, 0x8E);
+	IDT_setGate(44, &isr44, 0x07, 0x8E);
+	IDT_setGate(45, &isr45, 0x07, 0x8E);
+	IDT_setGate(46, &isr46, 0x07, 0x8E);
+	IDT_setGate(47, &isr47, 0x07, 0x8E);
 	
 	IDT_setGate(128, isr128, 0x08, 0x8E);
 	IDT_setGate(177, isr177, 0x08, 0x8E);

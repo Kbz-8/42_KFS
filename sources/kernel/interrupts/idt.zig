@@ -1,4 +1,4 @@
-pub const out = @import("io/out.zig");
+// pub const out = @import("io/out.zig");
 
 extern fn  isr0()void; extern fn  isr1()void; extern fn  isr2()void; extern fn  isr3()void;
 extern fn  isr4()void; extern fn  isr5()void; extern fn  isr6()void; extern fn  isr7()void;
@@ -198,7 +198,7 @@ pub fn outPortB(port : u16, value : u8) void
 		\\ movl %[port], %%eax
         \\ movb %[value], %%al
         \\ outb %%al, %%dx
-        : [ret] "={eax}" (-> u8)
+        : 
         : [port] "%[port]" (port),
           [value] "%[value]" (value)
         : "memory" );
@@ -208,7 +208,7 @@ export fn isr_handler(regs : *IDT_Register) void
 {
 	if (regs.int_nb < 32)
 	{
-		out.kputs(error_messages[regs.int_nb]); // todo: put kernel panic
+		//out.kputs(error_messages[regs.int_nb]); // todo: put kernel panic
 	}
 }
 
@@ -244,8 +244,8 @@ fn isr_common_stub() void
 	}
 }
 
-comptime (
-	asm volatile {
+comptime {
+	asm (
 	\\.macro isr_generate i
 	\\.align 4
 	\\.type isr\i, @function
@@ -310,8 +310,8 @@ comptime (
 
 	\\ isr_generate 128
 	\\ isr_generate 177
-	};
-)
+	);
+}
 
 fn irq_common_stub() void
 {
@@ -346,7 +346,8 @@ fn irq_common_stub() void
 	);
 	}
 }
-var irq_routines = [_][] const i32 {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+var irq_routines : [32]?*const fn(*IDT_Register) void = undefined;
 
 fn irq_install_handler(irq : i32, handler : fn(u32) i32) void
 {
@@ -362,9 +363,10 @@ export fn irq_handler(regs : *IDT_Register) void
 {
 	const handler = irq_routines[regs.int_nb - 32];
 
-	if (handler)
-		handler(regs);
-
+	if (handler) |func|
+	{
+		func(regs);
+	}
 	if (regs.int_nb >= 40)
 		outPortB(0x0A, 0x20);
 	

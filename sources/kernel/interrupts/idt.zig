@@ -1,4 +1,5 @@
-// pub const out = @import("io/out.zig");
+pub const out = @import("../io/out.zig");
+pub const kpanic = @import("../panic.zig").kpanic;
 
 extern fn  isr0()void; extern fn  isr1()void; extern fn  isr2()void; extern fn  isr3()void;
 extern fn  isr4()void; extern fn  isr5()void; extern fn  isr6()void; extern fn  isr7()void;
@@ -26,10 +27,10 @@ const IDT_Entry = packed struct
 const IDT_Pointer = packed struct
 {
 	limit : u16,
-	base : u32,
+	base : *[256]IDT_Entry,
 };
 
-const IDT_Register = struct
+const IDT_Register = packed struct
 {
 	cr2 : u32,
 	ds : u32,
@@ -50,19 +51,12 @@ const IDT_Register = struct
 	ss : u32,
 };
 
-var IDTEntry = IDT_Entry[256] 
-{
-	.base_low = 0,
-	.segment_selector = 0,
-	.reserved = 0,
-	.flags = 0,
-	.base_high = 0
-};
+var IDTEntry : [256]IDT_Entry = undefined;
 
 var IDTPointer = IDT_Pointer
 {
 	.limit = 0,
-	.base = 0,
+	.base = undefined,
 };
 
 var error_messages = [_][] const u8 
@@ -101,24 +95,31 @@ var error_messages = [_][] const u8
     "Reserved"
 };
 
-pub fn IDT_flush(t : u32) u32
+pub fn IDT_flush(t : u32) u16
 {
-	asm volatile 
+	asm volatile
 	(
-		\\ movl %[t], %%eax
         \\ lidt (%%eax)
 		\\ sti
-        : [ret] "={eax}" (-> u32)
-        : [t] "%[t]" (t)
+		: 
+        : [t] "{eax}" (t)
         : "memory"
 	);
+	return (0);
 }
 
-pub fn IDT_init() void
+pub fn IDT_Init() void
 {
+	for (0..256) |i|
+	{
+		IDTEntry[i].base_low = 0;
+		IDTEntry[i].segment_selector = 0;
+		IDTEntry[i].reserved = 0;
+		IDTEntry[i].flags = 0;
+		IDTEntry[i].base_high = 0;
+	}
 	IDTPointer.limit = @sizeOf(IDT_Entry) * 256 - 1;
-	IDTPointer.base = @as(u32, &IDTEntry);
-	@memset(IDT_Entry, 0);
+	IDTPointer.base = &IDTEntry;
 
 	// init "master" chip (commands : 0x20 data : 0x21) and "slave" chip (commands : 0xA0 data : 0xA1)
 	outPortB(0x20, 0x11);
@@ -136,71 +137,71 @@ pub fn IDT_init() void
 	outPortB(0x21, 0x0);
 	outPortB(0xA1, 0x0);
 
-	IDT_setGate(0, &isr0, 0x08, 0x8E);
-	IDT_setGate(1, &isr1, 0x08, 0x8E);
-	IDT_setGate(2, &isr2, 0x08, 0x8E);
-	IDT_setGate(3, &isr3, 0x08, 0x8E);
-	IDT_setGate(4, &isr4, 0x08, 0x8E);
-	IDT_setGate(5, &isr5, 0x08, 0x8E);
-	IDT_setGate(6, &isr6, 0x08, 0x8E);
-	IDT_setGate(7, &isr7, 0x08, 0x8E);
-	IDT_setGate(8, &isr8, 0x08, 0x8E);
-	IDT_setGate(9, &isr9, 0x08, 0x8E);
-	IDT_setGate(10, &isr10, 0x08, 0x8E);
-	IDT_setGate(11, &isr11, 0x08, 0x8E);
-	IDT_setGate(12, &isr12, 0x08, 0x8E);
-	IDT_setGate(13, &isr13, 0x08, 0x8E);
-	IDT_setGate(14, &isr14, 0x08, 0x8E);
-	IDT_setGate(15, &isr15, 0x08, 0x8E);
-	IDT_setGate(16, &isr16, 0x08, 0x8E);
-	IDT_setGate(17, &isr17, 0x08, 0x8E);
-	IDT_setGate(18, &isr18, 0x08, 0x8E);
-	IDT_setGate(19, &isr19, 0x08, 0x8E);
-	IDT_setGate(20, &isr20, 0x08, 0x8E);
-	IDT_setGate(21, &isr21, 0x08, 0x8E);
-	IDT_setGate(22, &isr22, 0x08, 0x8E);
-	IDT_setGate(23, &isr23, 0x08, 0x8E);
-	IDT_setGate(24, &isr24, 0x08, 0x8E);
-	IDT_setGate(25, &isr25, 0x08, 0x8E);
-	IDT_setGate(26, &isr26, 0x08, 0x8E);
-	IDT_setGate(27, &isr27, 0x08, 0x8E);
-	IDT_setGate(28, &isr28, 0x08, 0x8E);
-	IDT_setGate(29, &isr29, 0x08, 0x8E);
-	IDT_setGate(30, &isr30, 0x08, 0x8E);
-	IDT_setGate(31, &isr31, 0x08, 0x8E);
+	IDT_setGate(0, @intFromPtr(&isr0), 0x08, 0x8E);
+	IDT_setGate(1, @intFromPtr(&isr1), 0x08, 0x8E);
+	IDT_setGate(2, @intFromPtr(&isr2), 0x08, 0x8E);
+	IDT_setGate(3, @intFromPtr(&isr3), 0x08, 0x8E);
+	IDT_setGate(4, @intFromPtr(&isr4), 0x08, 0x8E);
+	IDT_setGate(5, @intFromPtr(&isr5), 0x08, 0x8E);
+	IDT_setGate(6, @intFromPtr(&isr6), 0x08, 0x8E);
+	IDT_setGate(7, @intFromPtr(&isr7), 0x08, 0x8E);
+	IDT_setGate(8, @intFromPtr(&isr8), 0x08, 0x8E);
+	IDT_setGate(9, @intFromPtr(&isr9), 0x08, 0x8E);
+	IDT_setGate(10, @intFromPtr(&isr10), 0x08, 0x8E);
+	IDT_setGate(11, @intFromPtr(&isr11), 0x08, 0x8E);
+	IDT_setGate(12, @intFromPtr(&isr12), 0x08, 0x8E);
+	IDT_setGate(13, @intFromPtr(&isr13), 0x08, 0x8E);
+	IDT_setGate(14, @intFromPtr(&isr14), 0x08, 0x8E);
+	IDT_setGate(15, @intFromPtr(&isr15), 0x08, 0x8E);
+	IDT_setGate(16, @intFromPtr(&isr16), 0x08, 0x8E);
+	IDT_setGate(17, @intFromPtr(&isr17), 0x08, 0x8E);
+	IDT_setGate(18, @intFromPtr(&isr18), 0x08, 0x8E);
+	IDT_setGate(19, @intFromPtr(&isr19), 0x08, 0x8E);
+	IDT_setGate(20, @intFromPtr(&isr20), 0x08, 0x8E);
+	IDT_setGate(21, @intFromPtr(&isr21), 0x08, 0x8E);
+	IDT_setGate(22, @intFromPtr(&isr22), 0x08, 0x8E);
+	IDT_setGate(23, @intFromPtr(&isr23), 0x08, 0x8E);
+	IDT_setGate(24, @intFromPtr(&isr24), 0x08, 0x8E);
+	IDT_setGate(25, @intFromPtr(&isr25), 0x08, 0x8E);
+	IDT_setGate(26, @intFromPtr(&isr26), 0x08, 0x8E);
+	IDT_setGate(27, @intFromPtr(&isr27), 0x08, 0x8E);
+	IDT_setGate(28, @intFromPtr(&isr28), 0x08, 0x8E);
+	IDT_setGate(29, @intFromPtr(&isr29), 0x08, 0x8E);
+	IDT_setGate(30, @intFromPtr(&isr30), 0x08, 0x8E);
+	IDT_setGate(31, @intFromPtr(&isr31), 0x08, 0x8E);
 
-	IDT_setGate(32, &isr32, 0x07, 0x8E);
-	IDT_setGate(33, &isr33, 0x07, 0x8E);
-	IDT_setGate(34, &isr34, 0x07, 0x8E);
-	IDT_setGate(35, &isr35, 0x07, 0x8E);
-	IDT_setGate(36, &isr36, 0x07, 0x8E);
-	IDT_setGate(37, &isr37, 0x07, 0x8E);
-	IDT_setGate(38, &isr38, 0x07, 0x8E);
-	IDT_setGate(39, &isr39, 0x07, 0x8E);
-	IDT_setGate(40, &isr40, 0x07, 0x8E);
-	IDT_setGate(41, &isr41, 0x07, 0x8E);
-	IDT_setGate(42, &isr42, 0x07, 0x8E);
-	IDT_setGate(43, &isr43, 0x07, 0x8E);
-	IDT_setGate(44, &isr44, 0x07, 0x8E);
-	IDT_setGate(45, &isr45, 0x07, 0x8E);
-	IDT_setGate(46, &isr46, 0x07, 0x8E);
-	IDT_setGate(47, &isr47, 0x07, 0x8E);
-	
-	IDT_setGate(128, isr128, 0x08, 0x8E);
-	IDT_setGate(177, isr177, 0x08, 0x8E);
+	IDT_setGate(32, @intFromPtr(&isr32), 0x08, 0x8E);
+	IDT_setGate(33, @intFromPtr(&isr33), 0x08, 0x8E);
+	IDT_setGate(34, @intFromPtr(&isr34), 0x08, 0x8E);
+	IDT_setGate(35, @intFromPtr(&isr35), 0x08, 0x8E);
+	IDT_setGate(36, @intFromPtr(&isr36), 0x08, 0x8E);
+	IDT_setGate(37, @intFromPtr(&isr37), 0x08, 0x8E);
+	IDT_setGate(38, @intFromPtr(&isr38), 0x08, 0x8E);
+	IDT_setGate(39, @intFromPtr(&isr39), 0x08, 0x8E);
+	IDT_setGate(40, @intFromPtr(&isr40), 0x08, 0x8E);
+	IDT_setGate(41, @intFromPtr(&isr41), 0x08, 0x8E);
+	IDT_setGate(42, @intFromPtr(&isr42), 0x08, 0x8E);
+	IDT_setGate(43, @intFromPtr(&isr43), 0x08, 0x8E);
+	IDT_setGate(44, @intFromPtr(&isr44), 0x08, 0x8E);
+	IDT_setGate(45, @intFromPtr(&isr45), 0x08, 0x8E);
+	IDT_setGate(46, @intFromPtr(&isr46), 0x08, 0x8E);
+	IDT_setGate(47, @intFromPtr(&isr47), 0x08, 0x8E);
 
-	IDT_flush(&IDTPointer);
+	IDT_setGate(128, @intFromPtr(&isr128), 0x08, 0x8E);
+	IDT_setGate(177, @intFromPtr(&isr177), 0x08, 0x8E);
+
+	_ = IDT_flush(@intFromPtr(&IDTPointer));
 }
 
 pub fn outPortB(port : u16, value : u8) void
 {
 	asm volatile ( 
-		\\ movl %[port], %%eax
-        \\ movb %[value], %%al
+		\\ movl %%ecx, %%eax
+        \\ movb %%dl, %%al
         \\ outb %%al, %%dx
         : 
-        : [port] "%[port]" (port),
-          [value] "%[value]" (value)
+        : [port] "{ecx}" (port),
+          [value] "{edx}" (value)
         : "memory" );
 }
 
@@ -208,40 +209,39 @@ export fn isr_handler(regs : *IDT_Register) void
 {
 	if (regs.int_nb < 32)
 	{
-		//out.kputs(error_messages[regs.int_nb]); // todo: put kernel panic
+		kpanic(error_messages[regs.int_nb]);
 	}
 }
 
-fn isr_common_stub() void
-{
-	comptime {
-		asm volatile (
-	\\pusha
-	\\mov eax,ds
-	\\push eax
 
-	\\mov ax, 0x10
-	\\mov ds, ax
-	\\mov es, ax
-	\\mov fs, ax
-	\\mov gs, ax
+comptime {
+	asm (
+		\\isr_common_stub:
+		\\pusha
+		\\mov %eax, %ds
+		\\push %eax
 
-	\\push esp
-	\\call isr_handler
+		\\mov %ax, 0x10
+		\\mov %ds, %ax
+		\\mov %es, %ax
+		\\mov %fs, %ax
+		\\mov %gs, %ax
 
-	\\add esp, 8
-	\\pop ebx
-	\\mov ds, bx
-	\\mov es, bx
-	\\mov fs, bx
-	\\mov gs, bx
+		\\push %esp
+		\\call isr_handler
 
-	\\popa
-	\\add esp, 8
-	\\sti
-	\\iret
+		\\add %esp, 8
+		\\pop %ebx
+		\\mov %ds, %bx
+		\\mov %es, %bx
+		\\mov %fs, %bx
+		\\mov %gs, %bx
+
+		\\popa
+		\\add %esp, 8
+		\\sti
+		\\iret
 	);
-	}
 }
 
 comptime {
@@ -252,7 +252,8 @@ comptime {
 	\\.global isr\i
 
 	\\isr\i:
-	\\.if (\i != 8 && !(\i >= 10 && \i <= 14) && \i != 17)
+	\\cli
+	\\.if (\i != 8 && !(\i >= 10 && \i <= 14))
 	\\	push $0
 	\\.endif
 	\\push $\i
@@ -313,69 +314,11 @@ comptime {
 	);
 }
 
-fn irq_common_stub() void
-{
-	comptime {
-		asm volatile (
-	\\pusha
-	\\mov eax,ds
-	\\push eax
-	\\mov eax, cr2
-	\\push eax
-
-	\\mov ax, 0x10
-	\\mov ds, ax
-	\\mov es, ax
-	\\mov fs, ax
-	\\mov gs, ax
-
-	\\push esp
-	\\call irq_handler
-
-	\\add esp, 8
-	\\pop ebx
-	\\mov ds, bx
-	\\mov es, bx
-	\\mov fs, bx
-	\\mov gs, bx
-
-	\\popa
-	\\add esp, 8
-	\\sti
-	\\iret
-	);
-	}
-}
-
-var irq_routines : [32]?*const fn(*IDT_Register) void = undefined;
-
-fn irq_install_handler(irq : i32, handler : fn(u32) i32) void
-{
-	irq_routines[irq] = handler;
-}
-
-fn irq_uninstall_handler(irq : i32) void
-{
-	irq_routines[irq] = 0;
-}
-
-export fn irq_handler(regs : *IDT_Register) void
-{
-	const handler = irq_routines[regs.int_nb - 32];
-
-	if (handler) |func|
-	{
-		func(regs);
-	}
-	if (regs.int_nb >= 40)
-		outPortB(0x0A, 0x20);
-	
-	outPortB(0x20, 0x20);
-}
 pub fn IDT_setGate(num : u8, base : u32, segment_selector : u16, flags : u8) void
 {
-	IDTEntry[num].base_low = base & 0xFFFF;
-	IDTEntry[num].base_high = (base >> 16) & 0xFFFF;
+	IDTEntry[num].base_low = @truncate(base);
+	IDTEntry[num].base_high = @truncate(base >> 16);
+	IDTEntry[num].reserved = 0;
 	IDTEntry[num].segment_selector = segment_selector;
 	IDTEntry[num].flags = flags | 0x60;
 }

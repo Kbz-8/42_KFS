@@ -54,7 +54,7 @@ pub fn build(b: *std.Build) void
     iso_step.dependOn(&iso_cmd.step);
     b.default_step.dependOn(iso_step);
 
-    const run_cmd_str = &[_][]const u8{ "qemu-system-i386", "-cdrom", iso_path, "-machine", "type=pc-i440fx-3.1" };
+    const run_cmd_str = &[_][]const u8{ "qemu-system-i386", "-s", "-S", "-cdrom", iso_path, "-machine", "type=pc-i440fx-3.1" };
 
     const run_cmd = b.addSystemCommand(run_cmd_str);
     run_cmd.step.dependOn(b.getInstallStep());

@@ -47,5 +47,10 @@ export fn _start() align(16) linksection(".text.boot") callconv(.Naked) noreturn
         :
         : [stk] "{ecx}" (@intFromPtr(&kernel_stack) + @sizeOf(@TypeOf(kernel_stack))),
     );
-    while(true) {}
+    while(true) {
+        asm volatile (
+            \\ hlt
+            :
+        );
+    }
 }

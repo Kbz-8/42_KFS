@@ -1,5 +1,4 @@
 const kernel = @import("kernel");
-
 const Keycodes = enum(u8)
 {
     NULL_KEY = 0,
@@ -75,11 +74,21 @@ const Keycodes = enum(u8)
 
 var keybuffer: [256]u8 = .{0} ** 256;
 
+pub fn keyboardHandler(regs : *kernel.idt.IDT_Register) void
+{
+    _ = regs;
+    _ = kernel.ports.in(u8, 0x60) & 0x7F;
+    _ = kernel.ports.in(u8, 0x60) & 0x80;
+    kernel.console.kputs("bozo");
+}
+
 pub fn init() void
 {
     @setCold(true);
     kernel.logs.klog("[PS/2 Keyboard Driver] loading...");
-
+    kernel.idt.irq_install_handler(1, &keyboardHandler);
+    _ = kernel.ports.in(u8, 0x60) & 0x7F;
+    _ = kernel.ports.in(u8, 0x60) & 0x80;
     kernel.logs.klog("[PS/2 Keyboard Driver] loaded");
 }
 

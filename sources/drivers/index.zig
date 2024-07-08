@@ -8,7 +8,6 @@ pub fn initDrivers() void
     @setCold(true);
     kernel.logs.klog("[Drivers Manager] loading drivers...");
     vga.init();
-    kb.init();
     kernel.logs.klog("[Drivers Manager] loaded all drivers");
 }
 

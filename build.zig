@@ -4,22 +4,22 @@ pub fn build(b: *std.Build) void
 {
     const kernel = b.addExecutable(.{
         .name = "kernel.elf",
-        .root_source_file = .{ .path = "sources/kernel/kmain.zig" },
+        .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "sources/kernel/kmain.zig" } },
             .target = b.resolveTargetQuery(.{
             .cpu_arch = .x86,
             .abi = .none,
             .os_tag = .freestanding,
         }),
-        .optimize = .ReleaseSmall,
-        // .strip = true,
+        .optimize = .Debug,
+        .strip = true,
         .code_model = .kernel,
         .pic = false,
         .error_tracing = false,
     });
-    kernel.setLinkerScriptPath(.{ .path = "linker.ld" });
+    kernel.setLinkerScriptPath(.{ .src_path = .{ .owner = b, .sub_path = "linker.ld" } });
 
     const drivers_module = b.addModule("drivers", .{
-        .root_source_file = .{ .path = "sources/drivers/index.zig" }
+        .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "sources/drivers/index.zig" } }
     });
 
     drivers_module.addImport("kernel", &kernel.root_module);
@@ -54,7 +54,7 @@ pub fn build(b: *std.Build) void
     iso_step.dependOn(&iso_cmd.step);
     b.default_step.dependOn(iso_step);
 
-    const run_cmd_str = &[_][]const u8{ "qemu-system-i386", "-cdrom", iso_path, "-machine", "type=pc-i440fx-3.1" };
+    const run_cmd_str = &[_][]const u8{ "qemu-system-i386", "-cdrom", iso_path };
 
     const run_cmd = b.addSystemCommand(run_cmd_str);
     run_cmd.step.dependOn(b.getInstallStep());

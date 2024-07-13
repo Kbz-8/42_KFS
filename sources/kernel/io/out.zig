@@ -81,7 +81,7 @@ fn printArg(arg: anytype, T: ArgTypes) void
     }
 }
 
-fn putNb(nbr: i64) void
+pub fn putNb(nbr: i64) void
 {
     if(nbr <= -2147483648)
         vga.putString("-2147483648")

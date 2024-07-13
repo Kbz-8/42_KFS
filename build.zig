@@ -10,7 +10,7 @@ pub fn build(b: *std.Build) void
             .abi = .none,
             .os_tag = .freestanding,
         }),
-        .optimize = .Debug,
+        .optimize = .ReleaseSmall,
         // .strip = true,
         .code_model = .kernel,
         .pic = false,

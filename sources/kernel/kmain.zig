@@ -25,7 +25,6 @@ pub const gdt = @import("interrupts/gdt.zig");
 export fn kmain() void
 {
     @setCold(true);
-    // int.init();
     drivers.initDrivers();
     gdt.gdtInit();
     idt.idtInit();

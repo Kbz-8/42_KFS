@@ -9,5 +9,6 @@ pub fn kpanic(message: []const u8) noreturn
     vga.putString(logs.getLogBuffer());
     vga.putString("\nkernel panic : ");
     vga.putString(message);
-    while(true){}
+    while(true)
+        asm volatile("hlt");
 }

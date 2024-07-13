@@ -25,7 +25,7 @@ const Screen = struct
     row: usize,
     column: usize,
     color: u8,
-	var buffer = [2000]u16;
+    var buffer = [2000]u16;
 };
 
 const VGA = struct

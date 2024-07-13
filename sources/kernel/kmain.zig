@@ -27,8 +27,8 @@ export fn kmain() void
     @setCold(true);
     // int.init();
     drivers.initDrivers();
-    gdt.GDT_Init();
-    idt.IDT_Init();
+    gdt.gdtInit();
+    idt.idtInit();
     drivers.kb.init();
     console.kputs("Welcome to RatiOS ! (just to respect the kfs-1 subject : 42)");
 }

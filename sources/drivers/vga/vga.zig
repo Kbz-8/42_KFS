@@ -112,8 +112,9 @@ pub fn scroll() void
 	}
 	for (0..vga.width) |y|
 	{
-		vga.buffer[vga.height * vga.width + y] = 0;
+		vga.buffer[(vga.height - 1) * vga.width + y] = 0;
 	}
+    vga.column -= 1;
 }
 
 pub fn putChar(c: u8) void
@@ -128,9 +129,10 @@ pub fn putChar(c: u8) void
         vga.row = 0;
         vga.column += 1;
         if (vga.column == vga.height)
+        {
             scroll();
+        }   
     }
-	
 }
 
 pub fn putCharAt(c: u8, x: usize, y: usize) void

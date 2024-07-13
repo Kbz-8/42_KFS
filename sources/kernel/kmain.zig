@@ -31,5 +31,4 @@ export fn kmain() void
     idt.IDT_Init();
     drivers.kb.init();
     console.kputs("Welcome to RatiOS ! (just to respect the kfs-1 subject : 42)");
-    drivers.shutdownDrivers();
 }

@@ -1,3 +1,4 @@
+pub const ports = @import("../ports/ports.zig");
 pub const out = @import("../io/out.zig");
 pub const kpanic = @import("../panic.zig").kpanic;
 pub const kernel = @import("../kmain.zig");
@@ -9,10 +10,10 @@ extern fn isr16()void; extern fn isr17()void; extern fn isr18()void; extern fn i
 extern fn isr20()void; extern fn isr21()void; extern fn isr22()void; extern fn isr23()void;
 extern fn isr24()void; extern fn isr25()void; extern fn isr26()void; extern fn isr27()void;
 extern fn isr28()void; extern fn isr29()void; extern fn isr30()void; extern fn isr31()void;
-extern fn irq0()void; extern fn irq1()void; extern fn irq2()void; extern fn irq3()void;
-extern fn irq4()void; extern fn irq5()void; extern fn irq6()void; extern fn irq7()void;
-extern fn irq8()void; extern fn irq9()void; extern fn irq10()void; extern fn irq11()void;
-extern fn irq12()void; extern fn irq13()void; extern fn irq14()void; extern fn irq15()void;
+extern fn isr32()void; extern fn isr33()void; extern fn isr34()void; extern fn isr35()void;
+extern fn isr36()void; extern fn isr37()void; extern fn isr38()void; extern fn isr39()void;
+extern fn isr40()void; extern fn isr41()void; extern fn isr42()void; extern fn isr43()void;
+extern fn isr44()void; extern fn isr45()void; extern fn isr46()void; extern fn isr47()void;
 extern fn isr128()void; extern fn isr177() void;
 
 const IDT_Entry = packed struct
@@ -38,7 +39,7 @@ pub const IDT_Register = packed struct
 	esi: u32,
 	ebp: u32,
 	esp: u32,
-	ebx : u32,
+	ebx: u32,
 	edx: u32, 
 	ecx: u32, 
 	eax : u32,
@@ -95,16 +96,18 @@ var error_messages = [_][] const u8
     "Reserved"
 };
 
-pub fn IDT_flush(t : u32) u16
+
+pub fn IDT_flush(t : u32) void
 {
 	asm volatile
 	(
         \\ lidt (%%eax)
+		\\ sti
 		: 
         : [t] "{eax}" (t)
         : "memory"
 	);
-	return (0);
+	return;
 }
 
 pub fn IDT_Init() void
@@ -122,20 +125,20 @@ pub fn IDT_Init() void
 	IDTPointer.base = &IDTEntry;
 
 	// init "master" chip (commands : 0x20 data : 0x21) and "slave" chip (commands : 0xA0 data : 0xA1)
-	outPortB(0x20, 0x11);
-	outPortB(0xA0, 0x11);
+	ports.out(u8, 0x20, 0x11);
+	ports.out(u8, 0xA0, 0x11);
 
-	outPortB(0x21, 0x20);
-	outPortB(0xA1, 0x28);
+	ports.out(u8, 0x21, 0x20);
+	ports.out(u8, 0xA1, 0x28);
 
-	outPortB(0x21, 0x04);
-	outPortB(0xA1, 0x02);
+	ports.out(u8, 0x21, 0x04);
+	ports.out(u8, 0xA1, 0x02);
 
-	outPortB(0x21, 0x01);
-	outPortB(0xA1, 0x01);
+	ports.out(u8, 0x21, 0x01);
+	ports.out(u8, 0xA1, 0x01);
 	
-	outPortB(0x21, 0x00);
-	outPortB(0xA1, 0x00);
+	ports.out(u8, 0x21, 0x00);
+	ports.out(u8, 0xA1, 0x00);
 	IDT_setGate(0, @intFromPtr(&isr0), 0x08, 0x8E);
 	IDT_setGate(1, @intFromPtr(&isr1), 0x08, 0x8E);
 	IDT_setGate(2, @intFromPtr(&isr2), 0x08, 0x8E);
@@ -169,44 +172,35 @@ pub fn IDT_Init() void
 	IDT_setGate(30, @intFromPtr(&isr30), 0x08, 0x8E);
 	IDT_setGate(31, @intFromPtr(&isr31), 0x08, 0x8E);
 
-	IDT_setGate(32, @intFromPtr(&irq0), 0x08, 0x8E);
-	IDT_setGate(33, @intFromPtr(&irq1), 0x08, 0x8E);
-	IDT_setGate(34, @intFromPtr(&irq2), 0x08, 0x8E);
-	IDT_setGate(35, @intFromPtr(&irq3), 0x08, 0x8E);
-	IDT_setGate(36, @intFromPtr(&irq4), 0x08, 0x8E);
-	IDT_setGate(37, @intFromPtr(&irq5), 0x08, 0x8E);
-	IDT_setGate(38, @intFromPtr(&irq6), 0x08, 0x8E);
-	IDT_setGate(39, @intFromPtr(&irq7), 0x08, 0x8E);
-	IDT_setGate(40, @intFromPtr(&irq8), 0x08, 0x8E);
-	IDT_setGate(41, @intFromPtr(&irq9), 0x08, 0x8E);
-	IDT_setGate(42, @intFromPtr(&irq10), 0x08, 0x8E);
-	IDT_setGate(43, @intFromPtr(&irq11), 0x08, 0x8E);
-	IDT_setGate(44, @intFromPtr(&irq12), 0x08, 0x8E);
-	IDT_setGate(45, @intFromPtr(&irq13), 0x08, 0x8E);
-	IDT_setGate(46, @intFromPtr(&irq14), 0x08, 0x8E);
-	IDT_setGate(47, @intFromPtr(&irq15), 0x08, 0x8E);
+	IDT_setGate(32, @intFromPtr(&isr32), 0x08, 0x8E);
+	IDT_setGate(33, @intFromPtr(&isr33), 0x08, 0x8E);
+	IDT_setGate(34, @intFromPtr(&isr34), 0x08, 0x8E);
+	IDT_setGate(35, @intFromPtr(&isr35), 0x08, 0x8E);
+	IDT_setGate(36, @intFromPtr(&isr36), 0x08, 0x8E);
+	IDT_setGate(37, @intFromPtr(&isr37), 0x08, 0x8E);
+	IDT_setGate(38, @intFromPtr(&isr38), 0x08, 0x8E);
+	IDT_setGate(39, @intFromPtr(&isr39), 0x08, 0x8E);
+	IDT_setGate(40, @intFromPtr(&isr40), 0x08, 0x8E);
+	IDT_setGate(41, @intFromPtr(&isr41), 0x08, 0x8E);
+	IDT_setGate(42, @intFromPtr(&isr42), 0x08, 0x8E);
+	IDT_setGate(43, @intFromPtr(&isr43), 0x08, 0x8E);
+	IDT_setGate(44, @intFromPtr(&isr44), 0x08, 0x8E);
+	IDT_setGate(45, @intFromPtr(&isr45), 0x08, 0x8E);
+	IDT_setGate(46, @intFromPtr(&isr46), 0x08, 0x8E);
+	IDT_setGate(47, @intFromPtr(&isr47), 0x08, 0x8E);
 
-	_ = IDT_flush(@intFromPtr(&IDTPointer));
+	IDT_setGate(128, @intFromPtr(&isr128), 0x08, 0x8E);
+	IDT_setGate(177, @intFromPtr(&isr177), 0x08, 0x8E);
+	IDT_flush(@intFromPtr(&IDTPointer));
 	out.kputs("FLUSH\n");
-}
-
-pub fn outPortB(port : u16, value : u8) void
-{
-	asm volatile ( 
-		\\ movl %%ecx, %%eax
-        \\ movb %%dl, %%al
-        \\ outb %%al, %%dx
-        : 
-        : [port] "{ecx}" (port),
-          [value] "{edx}" (value)
-        : "memory" );
 }
 
 export fn isr_handler(regs : *IDT_Register) void
 {
-	if (regs.int_nb < 32)
+	const tmp : u32 = regs.int_nb;
+	if (regs.int_nb < 32 and regs.int_nb >= 0)
 	{
-		kpanic(error_messages[regs.int_nb]);
+		kpanic(error_messages[tmp]);
 	}
 }
 
@@ -215,18 +209,15 @@ var irq_routines : [16]?*const fn(*IDT_Register) void = undefined;
 export fn irq_handler(regs : *IDT_Register) void
 {
 	const handler = irq_routines[regs.int_nb - 32];
-
-	kernel.console.kputs("called irq_handler");
 	if (handler) |i|
 	{
-		kernel.console.kputs("found handler");
 		i(regs);
 	}
 	if (regs.int_nb >= 40)
 	{
-		outPortB(0xA0, 0x20);
+		ports.out(u8, 0xA0, 0x20);
 	}
-	outPortB(0x20, 0x20);
+	ports.out(u8, 0x20, 0x20);
 }
 
 pub fn irq_install_handler(irq : usize, handler : *const fn(*IDT_Register) void) void
@@ -248,54 +239,60 @@ comptime {
 	asm (
 		\\.extern isr_handler
 		\\.extern irq_handler
+		\\
 		\\isr_common_stub:
 		\\pusha
-		\\mov %eax, %ds
+		\\mov %dx, %ax
+		\\push %eax
+		\\mov %cr2, %eax
 		\\push %eax
 
-		\\mov %ax, 0x10
-		\\mov %ds, %ax
-		\\mov %es, %ax
-		\\mov %fs, %ax
-		\\mov %gs, %ax
+		\\mov $0x10, %ax
+		\\mov %ax, %ds
+		\\mov %ax, %es
+		\\mov %ax, %fs
+		\\mov %ax, %gs
 
 		\\push %esp
 		\\call isr_handler
 
-		\\add %esp, 8
+		\\add $8, %esp
 		\\pop %ebx
-		\\mov %ds, %bx
-		\\mov %es, %bx
-		\\mov %fs, %bx
-		\\mov %gs, %bx
+		\\mov %bx, %ds
+		\\mov %bx, %es
+		\\mov %bx, %fs
+		\\mov %bx, %gs
 
 		\\popa
-		\\add %esp, 8
+		\\add $8, %esp
 		\\sti
 		\\iret
 		\\
 		\\irq_common_stub:
 		\\pusha
-		\\mov %eax, %ds
+		\\mov %ds, %eax
 		\\push %eax
-		\\mov %ax, 0x10
-		\\mov %ds, %ax
-		\\mov %es, %ax
-		\\mov %fs, %ax
-		\\mov %gs, %ax
+		\\mov %cr2, %eax
+		\\push %eax
+
+		\\mov $0x10, %ax
+		\\mov %ax, %ds
+		\\mov %ax, %es
+		\\mov %ax, %fs
+		\\mov %ax, %gs
 
 		\\push %esp
 		\\call irq_handler
 
-		\\add %esp, 8
+		\\add $8, %esp
 		\\pop %ebx
-		\\mov %ds, %bx
-		\\mov %es, %bx
-		\\mov %fs, %bx
-		\\mov %gs, %bx
+		\\mov %bx, %ds
+		\\mov %bx, %es
+		\\mov %bx, %fs
+		\\mov %bx, %gs
 
 		\\popa
-		\\add %esp, 8
+		\\add $8, %esp
 		\\sti
 		\\iret
 		\\
@@ -311,26 +308,17 @@ comptime {
 
 	\\isr\i:
 	\\cli
-	\\.if (\i != 8 && !(\i >= 10 && \i <= 14))
-	\\	push $0
+	\\.if (\i != 8 && !(\i >= 10 && \i <= 14) || \i >= 32)
+	\\	pushl $0
 	\\.endif
 	\\
-	\\push $\i
+	\\pushl $\i
+	\\.if (\i >= 32 && \i <= 47)
+	\\	jmp irq_common_stub
+	\\.endif
 	\\jmp isr_common_stub
 	\\.endmacro
-	\\
-	\\.macro irq_generate i
-	\\.align 4
-	\\.type irq\i, @function
-	\\.global irq\i
-	\\
-	\\irq\i:
-	\\cli
-	\\push $0
-	\\push 32 + \i
-	\\jmp irq_common_stub
-	\\.endmacro
-	\\
+
 	\\ isr_generate 0
 	\\ isr_generate 1
 	\\ isr_generate 2
@@ -364,22 +352,22 @@ comptime {
 	\\ isr_generate 30
 	\\ isr_generate 31
 
-	\\ irq_generate 0
-	\\ irq_generate 1
-	\\ irq_generate 2
-	\\ irq_generate 3
-	\\ irq_generate 4
-	\\ irq_generate 5
-	\\ irq_generate 6
-	\\ irq_generate 7
-	\\ irq_generate 8
-	\\ irq_generate 9
-	\\ irq_generate 10
-	\\ irq_generate 11
-	\\ irq_generate 12
-	\\ irq_generate 13
-	\\ irq_generate 14
-	\\ irq_generate 15
+	\\ isr_generate 32
+	\\ isr_generate 33
+	\\ isr_generate 34
+	\\ isr_generate 35
+	\\ isr_generate 36
+	\\ isr_generate 37
+	\\ isr_generate 38
+	\\ isr_generate 39
+	\\ isr_generate 40
+	\\ isr_generate 41
+	\\ isr_generate 42
+	\\ isr_generate 43
+	\\ isr_generate 44
+	\\ isr_generate 45
+	\\ isr_generate 46
+	\\ isr_generate 47
 
 	\\ isr_generate 128
 	\\ isr_generate 177

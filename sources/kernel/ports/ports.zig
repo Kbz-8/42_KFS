@@ -24,9 +24,9 @@ pub fn in(comptime Type: type, port: u16) Type
     };
 }
 
-pub fn out(port: u16, data: anytype) void
+pub fn out(comptime Type: type, port: u16, data: Type) void
 {
-    switch(@TypeOf(data))
+    switch(Type)
     {
         u8 => asm volatile
         (

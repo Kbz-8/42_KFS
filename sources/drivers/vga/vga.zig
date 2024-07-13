@@ -151,10 +151,3 @@ pub fn clear(color: Color) void
     vga.column = 0;
     vga.row = 0;
 }
-
-pub fn init() void
-{
-    kernel.logs.klog("[VGA Driver] loading...");
-    clear(Color.BLACK);
-    kernel.logs.klog("[VGA Driver] loaded");
-}

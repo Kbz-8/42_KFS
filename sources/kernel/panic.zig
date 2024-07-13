@@ -1,4 +1,5 @@
 const vga = @import("drivers").vga;
+const arch = @import("kmain.zig").arch;
 const logs = @import("log.zig");
 
 pub fn kpanic(message: []const u8) noreturn
@@ -10,5 +11,8 @@ pub fn kpanic(message: []const u8) noreturn
     vga.putString("\nkernel panic : ");
     vga.putString(message);
     while(true)
-        asm volatile("hlt");
+    {
+        arch.disableInts();
+        arch.halt();
+    }
 }

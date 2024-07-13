@@ -1,6 +1,5 @@
-pub const out = @import("../io/out.zig");
-pub const ports = @import("../ports/ports.zig");
-pub const kpanic = @import("../panic.zig").kpanic;
+pub const ports = @import("ports.zig");
+pub const kpanic = @import("../../panic.zig").kpanic;
 
 extern fn  isr0()void; extern fn  isr1()void; extern fn  isr2()void; extern fn  isr3()void;
 extern fn  isr4()void; extern fn  isr5()void; extern fn  isr6()void; extern fn  isr7()void;
@@ -112,7 +111,6 @@ pub fn idtFlush(t: u32) void
 
 pub fn idtInit() void
 {
-    out.kputs("INIT\n");
     for (0..255) |i|
     {
         idt_entries[i].base_low = 0;
@@ -192,7 +190,6 @@ pub fn idtInit() void
     idtSetGate(128, @intFromPtr(&isr128), 0x08, 0x8E);
     idtSetGate(177, @intFromPtr(&isr177), 0x08, 0x8E);
     idtFlush(@intFromPtr(&idt_pointer));
-    out.kputs("FLUSH\n");
 }
 
 export fn isrHandler(regs: *IDTRegister) void
@@ -216,11 +213,6 @@ export fn irqHandler(regs: *IDTRegister) void
 
 pub fn irqInstallHandler(irq: usize, handler: *const fn(*IDTRegister) void) void
 {
-    out.kputs("set irq\n");
-    out.putNb(irq);
-    out.kputs("\n");
-    out.putNb(@intFromPtr(handler));
-    out.kputs("\n");
     irq_routines[irq] = handler;
 }
 

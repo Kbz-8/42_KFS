@@ -124,8 +124,13 @@ fn updateNavbar() void
 
 pub fn initNavBar(title : []const u8, title_color : u8, navbar_color : u8, triggered_color : u8) void
 {
+    if (title.len >= 48)
+        return;
     vga.color = title_color;
     putStringAt(title, 0, 0);
+    for (title, 0..title.len) |c, i|
+        putCharAt(c, i, 0);
+    vga.color = navbar_color;
     for (title.len..48) |i|
         putCharAt(' ', i, 0);
     for (48..63) |i|

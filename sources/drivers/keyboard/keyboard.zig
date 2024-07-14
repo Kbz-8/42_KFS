@@ -84,6 +84,8 @@ pub fn keyboardHandler(regs: *kernel.arch.idt.IDTRegister) void
                     caps_lock = false;
                 return;
             }
+            if (press != 0)
+                return;
             if (scan_code >= 59 and scan_code <= 66)
                 vga.changeScreen(scan_code - 59);
             return;

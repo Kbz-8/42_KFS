@@ -126,8 +126,13 @@ pub fn initNavBar(title : []const u8, title_color : u8, navbar_color : u8, trigg
 {
     vga.color = title_color;
     putStringAt(title, 0, 0);
-    for (title.len..63) |i|
+    for (title.len..48) |i|
         putCharAt(' ', i, 0);
+    for (48..63) |i|
+    {
+        vga.color = computeColor(@enumFromInt(i - 48), @enumFromInt(i - 48));
+        putCharAt(' ', i, 0);
+    }
     vga.color = navbar_color;
     vga.nav_color = navbar_color;
     vga.nav_triggered_color = triggered_color;

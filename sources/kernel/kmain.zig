@@ -18,7 +18,6 @@ const drivers = @import("drivers");
 pub const logs = @import("log.zig");
 pub const kpanic = @import("panic.zig").kpanic;
 pub const console = @import("io/out.zig");
-
 pub const arch = if(!is_test) switch(builtin.cpu.arch)
 {
     .x86 => @import("arch/x86/arch.zig"),
@@ -31,6 +30,5 @@ export fn kmain() void
     drivers.vga.clear(drivers.vga.Color.BLACK);
     arch.init();
     drivers.initDrivers();
-    console.kputs("Welcome to RatiOS ! (just to respect the kfs-1 subject : 42)");
     drivers.shutdownDrivers();
 }

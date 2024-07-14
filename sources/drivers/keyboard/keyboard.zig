@@ -3,6 +3,7 @@ const vga = @import("../vga/vga.zig");
 
 var caps_on: bool = false;
 var caps_lock: bool = false;
+var num_lock: bool = false;
 
 const UNKNOWN: u32 = 0xFFFFFFFF;
 const ESC: u32 = 0xFFFFFFFF - 1;
@@ -71,15 +72,31 @@ pub fn keyboardHandler(regs: *kernel.arch.idt.IDTRegister) void
 
     switch(scan_code)
     {
-        1, 29, 56, 59...68, 87, 88 => // control keys
+        1, 29, 56, 59...69, 87, 88 => // control keys
         {
             if(lowercase[scan_code] == ESC)
                 vga.putChar('m');
+            if (scan_code == 69)
+            {
+                if(!caps_lock and press == 0)
+                    caps_lock = true
+                else if(caps_lock and press == 0)
+                    caps_lock = false;
+                return;
+            }
+            if (scan_code >= 59 and scan_code <= 66)
+                vga.changeScreen(scan_code - 59);
+            return;
+        },
+        14 =>
+        {
+            if (press != 0)
+                return;
+            vga.putChar(14);
             return;
         },
         42 =>
         {
-            //shift key
             caps_on = press == 0;
             return;
         },

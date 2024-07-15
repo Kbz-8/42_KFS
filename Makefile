@@ -4,6 +4,9 @@ all :
 run :
 	@zig build run
 
+run-debug :
+	@zig build run-debug
+
 clean:
 
 fclean : clean

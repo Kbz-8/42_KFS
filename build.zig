@@ -11,7 +11,7 @@ pub fn build(b: *std.Build) void
             .os_tag = .freestanding,
         }),
         .optimize = .Debug,
-        .strip = true,
+        //.strip = true,
         .code_model = .kernel,
         .pic = false,
         .error_tracing = false,
@@ -55,10 +55,14 @@ pub fn build(b: *std.Build) void
     b.default_step.dependOn(iso_step);
 
     const run_cmd_str = &[_][]const u8{ "qemu-system-i386", "-cdrom", iso_path };
-
     const run_cmd = b.addSystemCommand(run_cmd_str);
     run_cmd.step.dependOn(b.getInstallStep());
-
     const run_step = b.step("run", "Run the kernel");
     run_step.dependOn(&run_cmd.step);
+
+    const run_debug_cmd_str = &[_][]const u8{ "qemu-system-i386", "-s", "-S", "-cdrom", iso_path };
+    const run_debug_cmd = b.addSystemCommand(run_debug_cmd_str);
+    run_debug_cmd.step.dependOn(b.getInstallStep());
+    const run_debug_step = b.step("run-debug", "Run the kernel in a debug session");
+    run_debug_step.dependOn(&run_debug_cmd.step);
 }

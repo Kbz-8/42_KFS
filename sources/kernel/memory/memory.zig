@@ -1,0 +1,36 @@
+pub fn find(comptime T: type, haystack: []const T, needle: T) bool
+{
+    for(haystack) |thing|
+    {
+        if(thing == needle)
+            return true;
+    }
+    return false;
+}
+
+pub fn eql(comptime T: type, a: []const T, b: []const T) bool
+{
+    if(a.len != b.len)
+        return false;
+    if(a.ptr == b.ptr)
+        return true;
+    for(a, b) |a_elem, b_elem|
+    {
+        if(a_elem != b_elem)
+            return false;
+    }
+    return true;
+}
+
+pub fn memcmp(lhs: [*]const u8, rhs: [*]const u8, sz: usize) i32
+{
+    var i: usize = 0;
+    while(i < sz) : (i += 1)
+    {
+        const comp = lhs[i] -% rhs[i];
+        if(comp != 0)
+            return comp;
+    }
+    return 0;
+}
+

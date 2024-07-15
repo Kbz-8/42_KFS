@@ -18,6 +18,8 @@ const drivers = @import("drivers");
 pub const logs = @import("log.zig");
 pub const kpanic = @import("panic.zig").kpanic;
 pub const console = @import("io/out.zig");
+pub const memory = @import("memory/memory.zig");
+
 pub const arch = if(!is_test) switch(builtin.cpu.arch)
 {
     .x86 => @import("arch/x86/arch.zig"),
@@ -27,7 +29,6 @@ pub const arch = if(!is_test) switch(builtin.cpu.arch)
 export fn kmain() void
 {
     @setCold(true);
-    drivers.vga.clear(drivers.vga.Color.BLACK);
     arch.init();
     drivers.initDrivers();
     drivers.shutdownDrivers();

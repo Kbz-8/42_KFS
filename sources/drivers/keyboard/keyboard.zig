@@ -74,9 +74,7 @@ pub fn keyboardHandler(regs: *kernel.arch.idt.IDTRegister) void
     {
         1, 29, 56, 59...69, 87, 88 => // control keys
         {
-            if(lowercase[scan_code] == ESC)
-                vga.putChar('m');
-            if (scan_code == 69)
+            if(scan_code == 69)
             {
                 if(!caps_lock and press == 0)
                     caps_lock = true
@@ -84,15 +82,15 @@ pub fn keyboardHandler(regs: *kernel.arch.idt.IDTRegister) void
                     caps_lock = false;
                 return;
             }
-            if (press != 0)
+            if(press != 0)
                 return;
-            if (scan_code >= 59 and scan_code <= 66)
+            if(scan_code >= 59 and scan_code <= 66)
                 vga.changeScreen(scan_code - 59);
             return;
         },
         14 =>
         {
-            if (press != 0)
+            if(press != 0)
                 return;
             vga.putChar(14);
             return;

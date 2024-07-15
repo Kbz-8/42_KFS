@@ -106,13 +106,13 @@ pub fn changeScreen(targetScreen: u8) void
 fn updateNavbar() void
 {
     vga.color = vga.nav_color;
-    for (63..80) |i|
+    for(63..80) |i|
     {
-        if (i % 2 == 1)
+        if(i % 2 == 1)
             putCharAt(' ', i, 0);
-        if (i % 2 == 0)
+        if(i % 2 == 0)
             putCharAt(17 + @as(u8, @truncate(i / 2)), i, 0);
-        if (@as(u8, @truncate((i - 63) / 2)) == vga.currentScreen and i % 2 == 0)
+        if(@as(u8, @truncate((i - 63) / 2)) == vga.currentScreen and i % 2 == 0)
         {
             vga.color = vga.nav_triggered_color;
             putCharAt(17 + @as(u8, @truncate(i / 2)), i, 0);
@@ -122,18 +122,21 @@ fn updateNavbar() void
      vga.color = computeColor(vga.curr_fg, vga.curr_bg);
 }
 
-pub fn initNavBar(title : []const u8, title_color : u8, navbar_color : u8, triggered_color : u8) void
+pub fn init(title : []const u8, title_color : u8, navbar_color : u8, triggered_color : u8) void
 {
-    if (title.len >= 48)
+    kernel.logs.klog("[VGA Driver] loading...");
+    if(title.len >= 48)
         return;
     vga.color = title_color;
     putStringAt(title, 0, 0);
-    for (title, 0..title.len) |c, i|
+    for(title, 0..title.len) |c, i|
         putCharAt(c, i, 0);
     vga.color = navbar_color;
-    for (title.len..48) |i|
+    for(title.len..48) |i|
         putCharAt(' ', i, 0);
-    for (48..63) |i|
+    // Colors gradient for style
+    const gradient_values = [_]u8{ 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63 };
+    for(gradient_values) |i|
     {
         vga.color = computeColor(@enumFromInt(i - 48), @enumFromInt(i - 48));
         putCharAt(' ', i, 0);
@@ -141,17 +144,18 @@ pub fn initNavBar(title : []const u8, title_color : u8, navbar_color : u8, trigg
     vga.color = navbar_color;
     vga.nav_color = navbar_color;
     vga.nav_triggered_color = triggered_color;
-    for (63..80) |i|
+    for(63..80) |i|
     {
-        if (i % 2 == 1)
+        if(i % 2 == 1)
             putCharAt(' ', i, 0);
-        if (i % 2 == 0)
+        if(i % 2 == 0)
             putCharAt(17 + @as(u8, @truncate(i / 2)), i, 0);
     }
     vga.color = computeColor(vga.curr_fg, vga.curr_bg);
     vga.column = 1;
     updateCursor();
     updateNavbar();
+    kernel.logs.klog("[VGA Driver] loaded");
 }
 
 fn putEntry(c: u8, color: u8, x: usize, y: usize) void
@@ -161,24 +165,24 @@ fn putEntry(c: u8, color: u8, x: usize, y: usize) void
 
 pub fn reverseScroll() void
 {
-    for (0..(vga.height - 2)) |x|
+    for(0..(vga.height - 2)) |x|
     {
-        for (0..vga.width) |y|
+        for(0..vga.width) |y|
             vga.buffer[x * vga.width + y] = vga.buffer[(x + 1) * vga.width + y];
     }
-    for (0..vga.width) |y|
+    for(0..vga.width) |y|
         vga.buffer[y] = getVal(' ', vga.color);
     updateCursor();
 }
 
 pub fn scroll() void
 {
-    for (2..vga.height) |x|
+    for(2..vga.height) |x|
     {
         for (0..vga.width) |y|
             vga.buffer[(x - 1) * vga.width + y] = vga.buffer[x * vga.width + y];
     }
-    for (0..vga.width) |y|
+    for(0..vga.width) |y|
         vga.buffer[(vga.height - 1) * vga.width + y] = getVal(' ', vga.color);
     vga.column -= 1;
     updateCursor();
@@ -190,11 +194,11 @@ pub fn putChar(c: u8) void
         return;
     if(c >= ' ' and c <= 126)
         putEntry(c, vga.color, vga.row, vga.column);
-    if (c == 14)
+    if(c == 14)
     {
-        if (vga.row == 0 and vga.column <= 1)
+        if(vga.row == 0 and vga.column <= 1)
             return;
-        if (vga.row == 0 and vga.column != 0)
+        if(vga.row == 0 and vga.column != 0)
         {
             vga.row = vga.width;
             vga.column -= 1;
@@ -206,7 +210,7 @@ pub fn putChar(c: u8) void
         updateCursor();
         return;
     }
-    if (c > 126)
+    if(c > 126)
         return;
     vga.row += 1;
     if(vga.row == vga.width or c == '\n')
@@ -228,13 +232,13 @@ pub fn putCharAt(c: u8, x: usize, y: usize) void
 
 pub fn putStringAt(string : []const u8, x: usize, y: usize) void
 {
-    for (string, 0..) |c, i|
+    for(string, 0..) |c, i|
         putCharAt(c, x + i, y);
     return;
 }
 pub fn putString(string: []const u8) void
 {
-    for (string) |c|
+    for(string) |c|
         putChar(c);
 }
 
@@ -247,9 +251,9 @@ pub fn setColor(fg: Color, bg: Color) void
 
 pub fn clear(color: Color) void
 {
-    for (0..vga.height) |i|
+    for(0..vga.height) |i|
     {
-        for (0..vga.width) |j|
+        for(0..vga.width) |j|
             vga.buffer[i * vga.width + j] = getVal(' ', computeColor(Color.WHITE, color));
     }
     vga.column = 0;

@@ -1,4 +1,5 @@
 const vga = @import("drivers").vga;
+const arch = @import("kmain.zig").arch;
 const logs = @import("log.zig");
 
 pub fn kpanic(message: []const u8) noreturn
@@ -9,6 +10,10 @@ pub fn kpanic(message: []const u8) noreturn
     vga.putString(logs.getLogBuffer());
     vga.putString("\nkernel panic : ");
     vga.putString(message);
+    vga.putString("\n[cannot recover, freezing the system]");
     while(true)
-        asm volatile("hlt");
+    {
+        arch.disableInts();
+        arch.halt();
+    }
 }

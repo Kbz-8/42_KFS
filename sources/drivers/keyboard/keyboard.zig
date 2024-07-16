@@ -3,6 +3,7 @@ const vga = @import("../vga/vga.zig");
 
 var caps_on: bool = false;
 var caps_lock: bool = false;
+var num_lock: bool = false;
 
 const UNKNOWN: u32 = 0xFFFFFFFF;
 const ESC: u32 = 0xFFFFFFFF - 1;
@@ -63,18 +64,39 @@ const uppercase = [128]u32 {
 
 var keybuffer: [256]u8 = .{0} ** 256;
 
-pub fn keyboardHandler(regs: *kernel.idt.IDTRegister) void
+pub fn keyboardHandler(regs: *kernel.arch.idt.IDTRegister) void
 {
     _ = regs;
-    const scan_code = kernel.ports.in(u8, 0x60) & 0x7F;
-    const press = kernel.ports.in(u8, 0x60) & 0x80;
+    const scan_code = kernel.arch.ports.in(u8, 0x60) & 0x7F;
+    const press = kernel.arch.ports.in(u8, 0x60) & 0x80;
 
     switch(scan_code)
     {
-        1, 29, 56, 59...68, 87, 88 => return,
+        1, 29, 56, 59...69, 87, 88 => // control keys
+        {
+            if(scan_code == 69)
+            {
+                if(!caps_lock and press == 0)
+                    caps_lock = true
+                else if(caps_lock and press == 0)
+                    caps_lock = false;
+                return;
+            }
+            if(press != 0)
+                return;
+            if(scan_code >= 59 and scan_code <= 66)
+                vga.changeScreen(scan_code - 59);
+            return;
+        },
+        14 =>
+        {
+            if(press != 0)
+                return;
+            vga.putChar(14);
+            return;
+        },
         42 =>
         {
-            //shift key
             caps_on = press == 0;
             return;
         },
@@ -101,8 +123,8 @@ pub fn keyboardHandler(regs: *kernel.idt.IDTRegister) void
 pub fn init() void
 {
     @setCold(true);
-    kernel.logs.klog("[PS/2 Keyboard Driver] loading...");
-    kernel.idt.irqInstallHandler(1, &keyboardHandler);
-    kernel.logs.klog("[PS/2 Keyboard Driver] loaded");
+    kernel.logs.klogln("[PS/2 Keyboard Driver] loading...");
+    kernel.arch.idt.irqInstallHandler(1, &keyboardHandler);
+    kernel.logs.klogln("[PS/2 Keyboard Driver] loaded");
 }
 

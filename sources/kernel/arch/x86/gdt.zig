@@ -136,7 +136,7 @@ pub fn gdtInit() void
     gdt_pointer.limit = @sizeOf(GDTEntry) * 6 - 1;
     gdt_pointer.base = &gdt_entries[0];
 
-    gdtSetGate(0,0,0,0,0);
+    gdtSetGate(0, 0, 0, 0, 0);
     gdtSetGate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
     gdtSetGate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
     gdtSetGate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF);

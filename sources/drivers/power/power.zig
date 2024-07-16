@@ -4,11 +4,11 @@ const acpi = @import("acpi.zig");
 pub fn init() void
 {
     @setCold(true);
-    kernel.logs.klog("[Power Driver] loading...");
+    kernel.logs.klogln("[Power Driver] loading...");
     if(!acpi.init())
-        kernel.logs.klog("[Power Driver] couldn't load")
+        kernel.logs.klogln("[Power Driver] couldn't load")
     else
-        kernel.logs.klog("[Power Driver] loaded");
+        kernel.logs.klogln("[Power Driver] loaded");
 }
 
 pub fn shutdown() void

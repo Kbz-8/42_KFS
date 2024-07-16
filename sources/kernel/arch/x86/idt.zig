@@ -194,9 +194,8 @@ pub fn idtInit() void
 
 export fn isrHandler(regs: *IDTRegister) void
 {
-    const tmp: u32 = regs.int_nb;
     if(regs.int_nb < 32 and regs.int_nb >= 0)
-        kpanic(error_messages[tmp]);
+        kpanic(error_messages[regs.int_nb]);
 }
 
 var irq_routines: [16]?*const fn(*IDTRegister) void = undefined;

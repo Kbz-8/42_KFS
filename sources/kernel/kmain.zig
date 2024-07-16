@@ -31,5 +31,6 @@ export fn kmain() void
     @setCold(true);
     arch.init();
     drivers.initDrivers();
+    console.kputs(logs.getLogBuffer());
     drivers.shutdownDrivers();
 }

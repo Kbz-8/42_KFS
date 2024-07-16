@@ -124,7 +124,7 @@ fn updateNavbar() void
 
 pub fn init(title : []const u8, title_color : u8, navbar_color : u8, triggered_color : u8) void
 {
-    kernel.logs.klog("[VGA Driver] loading...");
+    kernel.logs.klogln("[VGA Driver] loading...");
     if(title.len >= 48)
         return;
     vga.color = title_color;
@@ -155,7 +155,7 @@ pub fn init(title : []const u8, title_color : u8, navbar_color : u8, triggered_c
     vga.column = 1;
     updateCursor();
     updateNavbar();
-    kernel.logs.klog("[VGA Driver] loaded");
+    kernel.logs.klogln("[VGA Driver] loaded");
 }
 
 fn putEntry(c: u8, color: u8, x: usize, y: usize) void

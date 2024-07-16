@@ -11,7 +11,7 @@ var SLP_EN: u16 = 0;
 var SCI_EN: u16 = 0;
 var PM1_CNT_LEN: u8 = 0;
 
-const RSDPtr = struct
+const RSDP = struct
 {
     signature: [8]u8,
     checksum: u8,
@@ -37,48 +37,44 @@ const FACP = struct
     PM1_CNT_LEN: u8,
 };
 
-const RSDPtrError = error
+fn checkRSDP(ptr: *u32) !*u32
 {
-    RSDPNotFound,
-};
-
-fn checkRSDPtr(ptr: *u32) !*u32
-{
-    const rsdp: *RSDPtr = @as(*RSDPtr, @ptrCast(ptr));
+    const rsdp: *RSDP = @as(*RSDP, @ptrCast(ptr));
     const sig = "RSD PTR ";
-    var check: u8 = 0;
+    var check: u32 = 0;
 
     if(kernel.memory.memcmp(sig, @as([*]u8, @ptrCast(rsdp)), 8) == 0)
     {
         // Check checksum of rsdp
-        var bptr: [*]u8 = @ptrCast(ptr);
-        for(0..@sizeOf(RSDPtr)) |i|
-        {
+        const bptr: [*]u8 = @ptrCast(ptr);
+        for(0..@sizeOf(RSDP)) |i|
             check += bptr[i];
-            bptr += 1;
-        }
         // Found valid rsdp
-        if(check == 0)
+        if(@as(u8, @truncate(check)) == 0)
             return rsdp.rsdt_address;
     }
-    return RSDPtrError.RSDPNotFound;
+    return error.RSDPNotFound;
 }
 
-fn getRSDPtr() !*usize
+fn getRSDP() !*u32
 {
-    var addr: usize = 0x000E0000;
+    var addr: u32 = 0x000E0000;
     // Search below the 1MB mark for RSDP signature
     while(addr < 0x00100000)
     {
-        if(checkRSDPtr(&addr)) |rsdp|
-            return rsdp
+        if(checkRSDP(@ptrFromInt(addr))) |rsdp|
+        {
+            kernel.logs.klogln("[ACPI] found RSDP");
+            return rsdp;
+        }
         else |err|
         {
-            if(err == RSDPtrError.RSDPNotFound)
-                addr += 0x10 / @sizeOf(@TypeOf(addr));
+            if(err == error.RSDPNotFound)
+                addr += 0x10 / @sizeOf(u32);
         }
     }
 
+    kernel.logs.klogln("2nd loop");
     // Calculate linear address from EBDA segment
     const ebda_segment = @as(usize, ((@as(*const u16, @ptrFromInt(0x40E))).*));
     const ebda_linear_address = ebda_segment * 0x10 & 0x000FFFFF;
@@ -87,16 +83,19 @@ fn getRSDPtr() !*usize
     addr = ebda_linear_address;
     while(addr < ebda_linear_address + 1024)
     {
-        if(checkRSDPtr(&addr)) |rsdp|
-            return rsdp
+        if(checkRSDP(&addr)) |rsdp|
+        {
+            kernel.logs.klogln("[ACPI] found RSDP");
+            return rsdp;
+        }
         else |err|
         {
-            if(err == RSDPtrError.RSDPNotFound)
+            if(err == error.RSDPNotFound)
                 addr += 0x10 / @sizeOf(@TypeOf(addr));
         }
     }
 
-    return RSDPtrError.RSDPNotFound;
+    return error.RSDPNotFound;
 }
 
 fn checkHeader(ptr: [*]u8, sig: []const u8) bool
@@ -146,18 +145,18 @@ fn enable() i32
             }
             if(i < 300)
             {
-                kernel.logs.klog("Enabled ACPI");
+                kernel.logs.klogln("[ACPI] Enabled");
                 return 0;
             }
             else
             {
-                kernel.logs.klog("Couldn't enable ACPI");
+                kernel.logs.klogln("[ACPI] Couldn't enable");
                 return -1;
             }
         }
         else
         {
-            kernel.logs.klog("Impossible to enable ACPI");
+            kernel.logs.klogln("[ACPI] Impossible to enable");
             return -1;
         }
     }
@@ -169,11 +168,11 @@ pub fn init() bool
 {
     @setRuntimeSafety(false);
 
-    kernel.logs.klog("[ACPI] loading...");
-    var ptr: *usize = getRSDPtr() catch |err|
+    kernel.logs.klogln("[ACPI] loading...");
+    var ptr: *u32 = getRSDP() catch |err|
     {
-        if(err == RSDPtrError.RSDPNotFound)
-            kernel.logs.klog("[ACPI] could not find RSDP address");
+        if(err == error.RSDPNotFound)
+            kernel.logs.klogln("[ACPI] could not find RSDP address");
         return false;
     };
 
@@ -228,24 +227,24 @@ pub fn init() bool
                             SLP_EN = 1 << 13;
                             SCI_EN = 1;
 
-                            kernel.logs.klog("[ACPI] loaded");
+                            kernel.logs.klogln("[ACPI] loaded");
                             return true;
                         }
                         else
-                            kernel.logs.klog("[ACPI] \\_S5 parse error");
+                            kernel.logs.klogln("[ACPI] \\_S5 parse error");
                     }
                     else
-                        kernel.logs.klog("[ACPI] \\_S5 not present");
+                        kernel.logs.klogln("[ACPI] \\_S5 not present");
                 }
                 else
-                    kernel.logs.klog("[ACPI] DSDT invalid");
+                    kernel.logs.klogln("[ACPI] DSDT invalid");
             }
             ptr = @ptrFromInt(@intFromPtr(ptr) + 1);
         }
-        kernel.logs.klog("[ACPI] no valid FACP present");
+        kernel.logs.klogln("[ACPI] no valid FACP present");
     }
     else
-        kernel.logs.klog("No ACPI");
+        kernel.logs.klogln("[ACPO] No ACPI found");
     return false;
 }
 
@@ -258,5 +257,5 @@ pub fn powerOff() void
     kernel.arch.ports.out(u16, @as(u32, PM1a_CNT.*), SLP_TYPa | SLP_EN);
     if(PM1b_CNT != null)
         kernel.arch.ports.out(@as(u32, PM1b_CNT.*), SLP_TYPb | SLP_EN);
-    kernel.logs.klog("[ACPI] PowerOFF failed");
+    kernel.logs.klogln("[ACPI] PowerOFF failed");
 }

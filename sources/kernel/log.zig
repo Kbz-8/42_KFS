@@ -32,8 +32,36 @@ pub fn klog(message: []const u8) void
         logger.buffer[logger.current_index] = c;
         logger.current_index += 1;
     }
-    logger.buffer[logger.current_index] = '\n';
-    logger.current_index += 1;
+}
+
+pub fn klogln(message: []const u8) void
+{
+    klog(message);
+    klog("\n");
+}
+
+pub fn klogNb(nbr: i64) void
+{
+    if(nbr <= -2147483648)
+        klog("-2147483648")
+    else if(nbr >= 2147483647)
+        klog("2147483647")
+    else if(nbr < 0)
+    {
+        klog("-");
+        klogNb(-nbr);
+    }
+    else if(nbr >= 10)
+    {
+        klogNb(@divFloor(nbr, 10));
+        const c: [1]u8 = .{ @intCast(@mod(nbr, 10) + @as(u8, 48)) };
+        klog(&c);
+    }
+    else
+    {
+        const c: [1]u8 = .{ @intCast(nbr + 48) };
+        klog(&c);
+    }
 }
 
 pub fn getLogBuffer() *[BUFFER_SIZE]u8

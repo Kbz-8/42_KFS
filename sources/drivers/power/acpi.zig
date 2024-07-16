@@ -1,4 +1,5 @@
 const kernel = @import("kernel");
+const rsdt = @import("rsdt.zig");
 
 var SMI_CMD: ?*u32 = null;
 var ACPI_ENABLE: u8 = 0;

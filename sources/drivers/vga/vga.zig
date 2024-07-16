@@ -236,6 +236,7 @@ pub fn putStringAt(string : []const u8, x: usize, y: usize) void
         putCharAt(c, x + i, y);
     return;
 }
+
 pub fn putString(string: []const u8) void
 {
     for(string) |c|

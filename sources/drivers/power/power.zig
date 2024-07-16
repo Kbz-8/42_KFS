@@ -5,10 +5,17 @@ pub fn init() void
 {
     @setCold(true);
     kernel.logs.klogln("[Power Driver] loading...");
+    kernel.logs.beginSection();
     if(!acpi.init())
-        kernel.logs.klogln("[Power Driver] couldn't load")
+    {
+        kernel.logs.endSection();
+        kernel.logs.klogln("[Power Driver] couldn't load");
+    }
     else
+    {
+        kernel.logs.endSection();
         kernel.logs.klogln("[Power Driver] loaded");
+    }
 }
 
 pub fn shutdown() void

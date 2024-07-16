@@ -27,7 +27,7 @@ pub fn memcmp(lhs: [*]const u8, rhs: [*]const u8, sz: usize) i32
     var i: usize = 0;
     while(i < sz) : (i += 1)
     {
-        const comp = @as(c_int, lhs[i]) -% @as(c_int, rhs[i]);
+        const comp = @as(i32, lhs[i]) -% @as(i32, rhs[i]);
         if(comp != 0)
             return comp;
     }

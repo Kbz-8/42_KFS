@@ -31,6 +31,7 @@ export fn kmain() void
     @setCold(true);
     arch.init();
     drivers.initDrivers();
+    logs.klogln("Welcome to RatiOS !");
     console.kputs(logs.getLogBuffer());
     drivers.shutdownDrivers();
 }

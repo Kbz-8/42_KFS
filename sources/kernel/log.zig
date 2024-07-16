@@ -1,9 +1,10 @@
-const BUFFER_SIZE: usize = 4096;
+const BUFFER_SIZE: usize = 16384;
 
 const Logger = struct
 {
     buffer: [BUFFER_SIZE]u8 = .{0} ** BUFFER_SIZE,
     current_index: usize = 0,
+    sections_nesting: u8 = 0,
 
     fn shiftBuffer(self: *Logger, size: usize) void
     {
@@ -19,14 +20,30 @@ const Logger = struct
 
 var logger = Logger{};
 
+pub fn beginSection() void
+{
+    logger.sections_nesting += 1;
+}
+
+pub fn endSection() void
+{
+    logger.sections_nesting -= 1;
+}
+
 pub fn klog(message: []const u8) void
 {
-    if(message.len + logger.current_index >= BUFFER_SIZE)
+    const nesting: u8 = if(logger.current_index > 0 and logger.buffer[logger.current_index - 1] == '\n') logger.sections_nesting else 0;
+    const total_len: usize = message.len + nesting * 4;
+    if(total_len + logger.current_index >= BUFFER_SIZE)
     {
-        logger.shiftBuffer(message.len + 1);
-        logger.current_index -= message.len + 1;
+        logger.shiftBuffer(total_len + 1);
+        logger.current_index -= total_len + 1;
     }
-
+    for(0..nesting * 4) |_|
+    {
+        logger.buffer[logger.current_index] = ' ';
+        logger.current_index += 1;
+    }
     for(message) |c|
     {
         logger.buffer[logger.current_index] = c;

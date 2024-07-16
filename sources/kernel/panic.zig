@@ -10,6 +10,7 @@ pub fn kpanic(message: []const u8) noreturn
     vga.putString(logs.getLogBuffer());
     vga.putString("\nkernel panic : ");
     vga.putString(message);
+    vga.putString("\n[cannot recover, freezing the system]");
     while(true)
     {
         arch.disableInts();

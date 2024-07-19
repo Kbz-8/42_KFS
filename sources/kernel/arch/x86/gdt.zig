@@ -1,3 +1,4 @@
+pub const console = @import("../../io/out.zig");
 const GDTEntry = packed struct
 {
     limit: u16,
@@ -45,7 +46,7 @@ const GDTPointer = packed struct
     base: *GDTEntry
 };
 
-var gdt_entries: [6]GDTEntry = undefined;
+var gdt_entries: *[6]GDTEntry = @ptrFromInt(0x800);
 
 var tss_entry: TSSEntry = .{
     .prev_tss = 0,
@@ -141,9 +142,9 @@ pub fn gdtInit() void
     gdtSetGate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
     gdtSetGate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF);
     gdtSetGate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);
-    writeTSS(5, 0x10, 0x0);
+    // writeTSS(5, 0x10, 0x8000000);
     gdtFlush(&gdt_pointer);
-    tssFlush();
+    // tssFlush();
 }
 
 pub fn gdtSetGate(num: u32, base: u32, limit: u32, access: u8, flags: u8) void

@@ -48,11 +48,7 @@ pub fn kprintf(fmt: [*:0]const u8, ...) callconv(.C) c_int
                         vga.putChar(@cVaArg(&ap, u8));
                         number_char_printed += 1;
                     },
-                    ArgTypes.Int =>
-                    {
-                        const j: i32 = @cVaArg(&ap, i32);
-                        number_char_printed += putNb(j);
-                    },
+                    ArgTypes.Int => number_char_printed += putNb(@cVaArg(&ap, i32)),
                     ArgTypes.Float => _ = @cVaArg(&ap, f32),
                     ArgTypes.String => _ = @cVaArg(&ap, *u8),
                     ArgTypes.Pointer => _ = @cVaArg(&ap, *u32),

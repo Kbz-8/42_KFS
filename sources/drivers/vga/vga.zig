@@ -106,20 +106,24 @@ pub fn changeScreen(targetScreen: u8) void
 fn updateNavbar() void
 {
     vga.color = vga.nav_color;
-    for(63..80) |i|
+	const values = [_]u8{'1','2','3','4','5','6','S','L'};
+	var i : u32 = 63;
+    for(values) |c|
     {
-        if(i % 2 == 1)
-            putCharAt(' ', i, 0);
-        if(i % 2 == 0)
-            putCharAt(17 + @as(u8, @truncate(i / 2)), i, 0);
-        if(@as(u8, @truncate((i - 63) / 2)) == vga.currentScreen and i % 2 == 0)
+        putCharAt(' ', i, 0);
+		i += 1;
+        if(@as(u8, @truncate((i - 63) / 2)) == vga.currentScreen)
         {
             vga.color = vga.nav_triggered_color;
-            putCharAt(17 + @as(u8, @truncate(i / 2)), i, 0);
+            putCharAt(c, i, 0);
             vga.color = vga.nav_color;
         }
+		else
+			putCharAt(c, i, 0);
+		i += 1;
     }
-     vga.color = computeColor(vga.curr_fg, vga.curr_bg);
+	putCharAt(' ', i, 0);
+    vga.color = computeColor(vga.curr_fg, vga.curr_bg);
 }
 
 pub fn init(title : []const u8, title_color : u8, navbar_color : u8, triggered_color : u8) void
@@ -144,13 +148,15 @@ pub fn init(title : []const u8, title_color : u8, navbar_color : u8, triggered_c
     vga.color = navbar_color;
     vga.nav_color = navbar_color;
     vga.nav_triggered_color = triggered_color;
-    for(63..80) |i|
-    {
-        if(i % 2 == 1)
-            putCharAt(' ', i, 0);
-        if(i % 2 == 0)
-            putCharAt(17 + @as(u8, @truncate(i / 2)), i, 0);
-    }
+	// const values = [_]u8{'1','2','3','4','5','6','S','L'};
+	// var i : u32 = 63;
+	// for (values) |c|
+	// {
+	// 	putCharAt(' ', i, 0);
+	// 	i += 1;
+	// 	putCharAt(c, i, 0);
+	// 	i += 1;
+    // }
     vga.color = computeColor(vga.curr_fg, vga.curr_bg);
     vga.column = 1;
     updateCursor();

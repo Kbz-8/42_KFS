@@ -148,15 +148,6 @@ pub fn init(title : []const u8, title_color : u8, navbar_color : u8, triggered_c
     vga.color = navbar_color;
     vga.nav_color = navbar_color;
     vga.nav_triggered_color = triggered_color;
-	// const values = [_]u8{'1','2','3','4','5','6','S','L'};
-	// var i : u32 = 63;
-	// for (values) |c|
-	// {
-	// 	putCharAt(' ', i, 0);
-	// 	i += 1;
-	// 	putCharAt(c, i, 0);
-	// 	i += 1;
-    // }
     vga.color = computeColor(vga.curr_fg, vga.curr_bg);
     vga.column = 1;
     updateCursor();

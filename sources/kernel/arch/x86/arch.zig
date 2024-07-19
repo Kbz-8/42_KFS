@@ -19,6 +19,6 @@ pub fn disableInts() void
 
 pub fn init() void
 {
+	idt.idtInit();
     gdt.gdtInit();
-    idt.idtInit();
 }

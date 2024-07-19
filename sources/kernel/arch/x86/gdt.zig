@@ -1,4 +1,5 @@
 pub const console = @import("../../io/out.zig");
+
 const GDTEntry = packed struct
 {
     limit: u16,

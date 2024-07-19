@@ -15,37 +15,58 @@ const ArgTypes = enum
     Null
 };
 
-pub fn kprintf(comptime fmt: []const u8, args: anytype) void
+pub fn kprintf(fmt: [*:0]const u8, ...) callconv(.C) c_int
 {
-    comptime var arg_idx: usize = 0;
-    comptime var arg_insert: bool = false;
-    comptime var arg_type: ArgTypes = .Null;
+    var ap = @cVaStart();
+    defer @cVaEnd(&ap);
 
-    inline for(fmt) |c|
+    var arg_insert: bool = false;
+    var arg_type: ArgTypes = .Null;
+    var number_char_printed: i32 = 0;
+
+    var i: usize = 0;
+    while(fmt[i] != 0)
     {
-        if(c == '{')
+        if(fmt[i] == '{')
         {
             arg_insert = true;
+            i += 1;
             continue;
         }
 
         if(arg_insert)
         {
-            if(c == '}')
+            if(fmt[i] == '}')
             {
                 if(arg_type == .Null)
-                    @compileError("invalid type identifier between the brackets");
-                printArg(args[arg_idx], arg_type);
+                    return -1;
+
+                switch(arg_type)
+                {
+                    ArgTypes.Char =>
+                    {
+                        vga.putChar(@cVaArg(&ap, u8));
+                        number_char_printed += 1;
+                    },
+                    ArgTypes.Int =>
+                    {
+                        const j: i32 = @cVaArg(&ap, i32);
+                        number_char_printed += putNb(j);
+                    },
+                    ArgTypes.Float => _ = @cVaArg(&ap, f32),
+                    ArgTypes.String => _ = @cVaArg(&ap, *u8),
+                    ArgTypes.Pointer => _ = @cVaArg(&ap, *u32),
+                    else => {},
+                }
 
                 arg_insert = false;
-                arg_idx += 1;
                 arg_type = .Null;
             }
             else if(arg_type != .Null)
-                @compileError("too much type identifiers between the brackets")
+                return -1
             else
             {
-                switch(c)
+                switch(fmt[i])
                 {
                     'c' => arg_type = .Char,
                     'i' => arg_type = .Int,
@@ -53,50 +74,49 @@ pub fn kprintf(comptime fmt: []const u8, args: anytype) void
                     'p' => arg_type = .Pointer,
                     's' => arg_type = .String,
 
-                    else => @compileError("invalid type identifier between the brackets"),
+                    else => return -1,
                 }
             }
         }
         else
-            vga.putChar(c);
+        {
+            vga.putChar(fmt[i]);
+            number_char_printed += 1;
+        }
+        i += 1;
     }
-
-    comptime
-    {
-        if(args.len != arg_idx)
-            @compileError("unused arguments");
-    }
+    return number_char_printed;
 }
 
-fn printArg(arg: anytype, T: ArgTypes) void
+pub fn putNb(nbr: i64) i32
 {
-    switch(T)
-    {
-        .Char => vga.putChar(arg),
-        .Int => putNb(arg),
-        .Float => {},
-        .String => {},
-        .Pointer => {},
-        else => {},
-    }
-}
+    var print_size: i32 = 0;
 
-pub fn putNb(nbr: i64) void
-{
     if(nbr <= -2147483648)
-        vga.putString("-2147483648")
+    {
+        vga.putString("-2147483648");
+        return 11;
+    }
     else if(nbr >= 2147483647)
-        vga.putString("2147483647")
+    {
+        vga.putString("2147483647");
+        return 10;
+    }
     else if(nbr < 0)
     {
         vga.putChar('-');
-        putNb(-nbr);
+        print_size += putNb(-nbr);
     }
     else if(nbr >= 10)
     {
-        putNb(@divFloor(nbr, 10));
+        print_size += putNb(@divFloor(nbr, 10));
         vga.putChar(@intCast(@mod(nbr, 10) + @as(u8, 48)));
+        print_size += 1;
     }
     else
+    {
         vga.putChar(@intCast(nbr + 48));
+        print_size += 1;
+    }
+    return print_size;
 }

@@ -32,5 +32,8 @@ export fn kmain() void
     arch.init();
     drivers.initDrivers();
     logs.klogln("Welcome to RatiOS !");
+    const caca: i32 = 1048;
+    _ = console.kprintf("caca ;{i};, ;{f};, ;{s};\n", caca, @as(f32, 1.6), "gros caca boudin");
+    _ = console.putNb(caca);
     drivers.shutdownDrivers();
 }

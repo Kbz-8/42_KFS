@@ -1,4 +1,3 @@
-pub const console = @import("../../io/out.zig");
 const boot = @import("boot.zig");
 
 const GDTEntry = packed struct

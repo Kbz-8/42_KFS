@@ -11,7 +11,7 @@ pub fn build(b: *std.Build) void
             .os_tag = .freestanding,
         }),
         .optimize = .Debug,
-        //.strip = true,
+        .strip = true,
         .code_model = .kernel,
         .pic = false,
         .error_tracing = false,
@@ -22,8 +22,16 @@ pub fn build(b: *std.Build) void
         .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "sources/drivers/index.zig" } }
     });
 
+    const libk_module = b.addModule("libk", .{
+        .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "sources/libk/index.zig" } }
+    });
+
     drivers_module.addImport("kernel", &kernel.root_module);
+    drivers_module.addImport("libk", libk_module);
     kernel.root_module.addImport("drivers", drivers_module);
+    kernel.root_module.addImport("libk", libk_module);
+    libk_module.addImport("kernel", &kernel.root_module);
+    libk_module.addImport("drivers", drivers_module);
 
     b.installArtifact(kernel);
 

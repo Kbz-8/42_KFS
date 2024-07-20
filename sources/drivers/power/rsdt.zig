@@ -1,4 +1,5 @@
 const kernel = @import("kernel");
+const libk = @import("libk");
 
 pub const RSDP = struct
 {
@@ -14,7 +15,7 @@ pub fn checkRSDP(ptr: *u32) !*u32
     const rsdp: *RSDP = @as(*RSDP, @ptrCast(ptr));
     const sig = "RSD PTR ";
     var check: u32 = 0;
-    if(kernel.memory.memcmp(sig, @as([*]u8, @ptrCast(rsdp)), 8) == 0)
+    if(libk.memory.memcmp(sig, @as([*]u8, @ptrCast(rsdp)), 8) == 0)
     {
         // Check checksum of rsdp
         const bptr: [*]u8 = @ptrCast(ptr);

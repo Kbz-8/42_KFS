@@ -1,4 +1,5 @@
 const kernel = @import("kernel");
+const libk = @import("libk");
 const rsdt = @import("rsdt.zig");
 const xsdt = @import("xsdt.zig");
 
@@ -107,7 +108,7 @@ fn getRSDP() !*u32
 
 fn checkHeader(ptr: *u32, sig: []const u8) bool
 {
-    if(kernel.memory.memcmp(@as([*]u8, @ptrCast(ptr)), @as([*]u8, @ptrCast(@constCast(sig))), 4) != 0)
+    if(libk.memory.memcmp(@as([*]u8, @ptrCast(ptr)), @as([*]u8, @ptrCast(@constCast(sig))), 4) != 0)
         return false;
     var check_ptr: [*]u8 = @ptrCast(ptr);
     var len: usize = @as(*usize, @ptrFromInt(@intFromPtr(ptr) + 1)).*;

@@ -9,7 +9,7 @@ pub fn build(b: *std.Build) void
         .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "sources/kernel/kmain.zig" } },
         .target = b.resolveTargetQuery(.{
             .cpu_arch = .x86,
-            .abi = .none,
+            .abi = .gnu,
             .os_tag = .freestanding,
         }),
         .optimize = .Debug,

@@ -1,3 +1,6 @@
+pub const console = @import("../../io/out.zig");
+const boot = @import("boot.zig");
+
 const GDTEntry = packed struct
 {
     limit: u16,
@@ -45,7 +48,7 @@ const GDTPointer = packed struct
     base: *GDTEntry
 };
 
-var gdt_entries: [6]GDTEntry = undefined;
+var gdt_entries: *[8]GDTEntry = @ptrFromInt(0x800);
 
 var tss_entry: TSSEntry = .{
     .prev_tss = 0,
@@ -104,7 +107,7 @@ comptime
     (
         \\ .type tssFlush, @function
         \\ tssFlush:
-        \\     mov $0x2B, %ax
+        \\     mov $0x38, %ax
         \\     ltr %ax
         \\     ret
     );
@@ -133,15 +136,17 @@ fn writeTSS(num: u32, ss0: u16, esp0: u32) void
 
 pub fn gdtInit() void
 {
-    gdt_pointer.limit = @sizeOf(GDTEntry) * 6 - 1;
+    gdt_pointer.limit = @sizeOf(GDTEntry) * 8 - 1;
     gdt_pointer.base = &gdt_entries[0];
 
     gdtSetGate(0, 0, 0, 0, 0);
     gdtSetGate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
     gdtSetGate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
-    gdtSetGate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF);
-    gdtSetGate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);
-    writeTSS(5, 0x10, 0x0);
+	gdtSetGate(3, @intFromPtr(&boot.kernel_stack), @sizeOf(@TypeOf(boot.kernel_stack)) - 1, 0x92, 0xCF);
+    gdtSetGate(4, 0, 0xFFFFFFFF, 0xFA, 0xCF);
+    gdtSetGate(5, 0, 0xFFFFFFFF, 0xF2, 0xCF);
+	gdtSetGate(6, @intFromPtr(&boot.user_stack), @sizeOf(@TypeOf(boot.user_stack)) - 1, 0xF2, 0xCF);
+    writeTSS(7, 0x10, @intFromPtr(&boot.kernel_stack));
     gdtFlush(&gdt_pointer);
     tssFlush();
 }

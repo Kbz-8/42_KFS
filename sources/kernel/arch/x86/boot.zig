@@ -16,7 +16,8 @@ comptime
     );
 }
 
-export var kernel_stack: [32 * 1024]u8 align(16) linksection(".bss") = undefined;
+pub export var kernel_stack: [32 * 1024]u8 align(16) linksection(".bss") = undefined;
+pub export var user_stack: [64 * 1024]u8 align(16) linksection(".bss") = undefined;
 
 extern fn kmain() void;
 

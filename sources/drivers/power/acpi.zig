@@ -1,5 +1,6 @@
 const kernel = @import("kernel");
 const rsdt = @import("rsdt.zig");
+const xsdt = @import("xsdt.zig");
 
 var SMI_CMD: ?*u32 = null;
 var ACPI_ENABLE: u8 = 0;
@@ -12,18 +13,7 @@ var SLP_EN: u16 = 0;
 var SCI_EN: u16 = 0;
 var PM1_CNT_LEN: u8 = 0;
 
-var ACPI_version: u8 = 0;
-
 var ACPI_init: bool = false;
-
-const RSDP = struct
-{
-    signature: [8]u8,
-    checksum: u8,
-    oem_id: [6]u8,
-    revision: u8,
-    rsdt_address: *u32,
-};
 
 const FACP = struct
 {
@@ -42,37 +32,14 @@ const FACP = struct
     PM1_CNT_LEN: u8,
 };
 
-fn checkRSDP(ptr: *u32) !*u32
-{
-    const rsdp: *RSDP = @as(*RSDP, @ptrCast(ptr));
-    const sig = "RSD PTR ";
-    var check: u32 = 0;
-
-    if(kernel.memory.memcmp(sig, @as([*]u8, @ptrCast(rsdp)), 8) == 0)
-    {
-        // Check checksum of rsdp
-        const bptr: [*]u8 = @ptrCast(ptr);
-        for(0..@sizeOf(RSDP)) |i|
-            check += bptr[i]; // Possible kernel panic if overflow here
-        if(@as(u8, @truncate(check)) == 0)
-        {
-            if(rsdp.revision == 0)
-                ACPI_version = 1
-            else
-                ACPI_version = 2;
-            return rsdp.rsdt_address;
-        }
-    }
-    return error.RSDPNotFound;
-}
-
 fn getRSDP() !*u32
 {
+    kernel.logs.klogln("[ACPI] searching RSDT or XSDT...");
     var addr: u32 = 0x000E0000;
     // Search below the 1MB mark for RSDP signature
     while(addr < 0x00100000)
     {
-        if(checkRSDP(@ptrFromInt(addr))) |rsdp|
+        if(rsdt.checkRSDP(@ptrFromInt(addr))) |rsdp|
         {
             kernel.logs.klog("[ACPI] found RSDP at address 0x");
             kernel.logs.klogNb(addr);
@@ -82,21 +49,34 @@ fn getRSDP() !*u32
         else |err|
         {
             if(err == error.RSDPNotFound)
-                addr += 0x10 / @sizeOf(u32);
+                addr += 0x10 / @sizeOf(u32)
+            else if(err == error.UseXSDT)
+            {
+                if(xsdt.checkXSDP(@ptrFromInt(addr))) |xsdp|
+                {
+                    kernel.logs.klog("[ACPI] found XSDT at address 0x");
+                    kernel.logs.klogNb(addr);
+                    kernel.logs.klog("\n");
+                    return xsdp;
+                }
+                else |err2|
+                {
+                    if(err2 == error.XSDPNotFound)
+                        addr += 0x10 / @sizeOf(u32);
+                }
+            }
         }
     }
-
     // Calculate linear address from EBDA segment
     const ebda_segment = @as(usize, @as(*const u16, @ptrFromInt(0x40E)).*);
     const ebda_linear_address = ebda_segment * 0x10 & 0x000FFFFF;
-
     // Search Extended BIOS Data Area for the Root System Description Pointer signature
     addr = ebda_linear_address;
     while(addr < ebda_linear_address + 1024)
     {
-        if(checkRSDP(&addr)) |rsdp|
+        if(rsdt.checkRSDP(&addr)) |rsdp|
         {
-            kernel.logs.klog("[ACPI] found RSDP in EBDA at address 0x");
+            kernel.logs.klog("[ACPI] found RSDT in EBDA at address 0x");
             kernel.logs.klogNb(addr);
             kernel.logs.klog("\n");
             return rsdp;
@@ -104,10 +84,24 @@ fn getRSDP() !*u32
         else |err|
         {
             if(err == error.RSDPNotFound)
-                addr += 0x10 / @sizeOf(@TypeOf(addr));
+                addr += 0x10 / @sizeOf(@TypeOf(addr))
+            else if(err == error.UseXSDT)
+            {
+                if(xsdt.checkXSDP(@ptrFromInt(addr))) |xsdp|
+                {
+                    kernel.logs.klog("[ACPI] found XSDT in EDBA at address 0x");
+                    kernel.logs.klogNb(addr);
+                    kernel.logs.klog("\n");
+                    return xsdp;
+                }
+                else |err2|
+                {
+                    if(err2 == error.XSDPNotFound)
+                        addr += 0x10 / @sizeOf(u32);
+                }
+            }
         }
     }
-
     return error.RSDPNotFound;
 }
 
@@ -180,15 +174,10 @@ pub fn init() bool
     var ptr: *u32 = getRSDP() catch |err|
     {
         if(err == error.RSDPNotFound)
-            kernel.logs.klogln("[ACPI] no RSDP found");
+            kernel.logs.klogln("[ACPI] no RSDP or XSDP found");
         return false;
     };
-
-    kernel.logs.klog("[ACPI] version ");
-    kernel.logs.klogNb(ACPI_version);
-    kernel.logs.klog("\n");
-
-    if(checkHeader(ptr, "RSDT"))
+    if(checkHeader(ptr, "RSDT") or checkHeader(ptr, "XSDT"))
     {
         var entries: i32 = @intCast((@as(*const u32, @ptrFromInt(@intFromPtr(ptr) + 1))).*);
         entries = @divFloor((entries - 36), 4);

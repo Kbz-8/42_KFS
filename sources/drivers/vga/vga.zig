@@ -139,7 +139,7 @@ pub fn moveCursor(dir : u8) void
 		vga.y += 1;
 	if (dir == 72 and vga.y == 1)
 		reverseScroll();
-	if (dir == 80 and vga.y == vga.height - 1)
+	if (dir == 80 and vga.y == vga.height)
 		scroll();
 	updateCursor();
 }

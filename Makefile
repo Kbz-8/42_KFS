@@ -1,11 +1,14 @@
 all :
 	@zig build
 
+debug:
+	@zig build -Ddebug=true
+
 run : fclean
 	@zig build run
 
 run-debug : fclean
-	@zig build run-debug
+	@zig build run-debug -Ddebug=true
 
 clean:
 

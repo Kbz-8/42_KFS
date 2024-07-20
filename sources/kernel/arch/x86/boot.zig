@@ -27,6 +27,7 @@ export fn _start() align(16) linksection(".text.boot") callconv(.Naked) noreturn
     asm volatile
     (
         \\ movl %[stk], %esp
+        \\ xor %ebp, %ebp
         \\ call kmain
         :
         : [stk] "{ecx}" (@intFromPtr(&kernel_stack) + @sizeOf(@TypeOf(kernel_stack))),

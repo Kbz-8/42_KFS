@@ -19,6 +19,6 @@ pub fn initDrivers() void
 pub fn shutdownDrivers() void
 {
     @setCold(true);
-    kernel.logs.klog("[Drivers Manager] unloading drivers...");
-    kernel.logs.klog("[Drivers Manager] unloaded all drivers");
+    kernel.logs.klogln("[Drivers Manager] unloading drivers...");
+    kernel.logs.klogln("[Drivers Manager] unloaded all drivers");
 }

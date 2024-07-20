@@ -18,6 +18,7 @@ const libk = @import("libk");
 
 pub const logs = @import("log.zig");
 pub const kpanic = @import("panic.zig").kpanic;
+pub const stk = @import("stack_trace.zig");
 
 pub const arch = if(!is_test) switch(builtin.cpu.arch)
 {

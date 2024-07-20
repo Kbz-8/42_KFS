@@ -2,19 +2,20 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) void
 {
+    const debug_symbols = b.option(bool, "debug", "Add debug symbols") orelse false;
+    
     const kernel = b.addExecutable(.{
         .name = "kernel.elf",
         .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "sources/kernel/kmain.zig" } },
-            .target = b.resolveTargetQuery(.{
+        .target = b.resolveTargetQuery(.{
             .cpu_arch = .x86,
             .abi = .none,
             .os_tag = .freestanding,
         }),
         .optimize = .Debug,
-        // .strip = true,
+        .strip = !debug_symbols,
         .code_model = .kernel,
         .pic = false,
-        .error_tracing = false,
     });
     kernel.setLinkerScriptPath(.{ .src_path = .{ .owner = b, .sub_path = "linker.ld" } });
 

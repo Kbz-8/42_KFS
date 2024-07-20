@@ -1,9 +1,12 @@
 const kernel = @import("kernel");
 const vga = @import("../vga/vga.zig");
+const libk = @import("libk");
 
 var caps_on: bool = false;
 var caps_lock: bool = false;
 var num_lock: bool = false;
+
+pub var keyboard_toggle : bool = true;
 
 const UNKNOWN: u32 = 0xFFFFFFFF;
 const ESC: u32 = 0xFFFFFFFF - 1;
@@ -70,29 +73,43 @@ pub fn keyboardHandler(regs: *kernel.arch.idt.IDTRegister) void
     const scan_code = kernel.arch.ports.in(u8, 0x60) & 0x7F;
     const press = kernel.arch.ports.in(u8, 0x60) & 0x80;
 
-    switch(scan_code)
+	switch(scan_code)
     {
-        1, 29, 56, 59...69, 87, 88 => // control keys
+        1, 29, 56, 59...69,72, 73, 75, 77, 80, 81, 87, 88 => // control keys
         {
-            if(scan_code == 69)
+            if (scan_code == 69)
             {
-                if(!caps_lock and press == 0)
+                if (!caps_lock and press == 0)
                     caps_lock = true
-                else if(caps_lock and press == 0)
+                else if (caps_lock and press == 0)
                     caps_lock = false;
                 return;
             }
-            if(press != 0)
+            if (press != 0)
                 return;
-            if(scan_code >= 59 and scan_code <= 66)
+			if (scan_code == 72 or scan_code == 75 or scan_code == 77 or scan_code == 80)
+				vga.moveCursor(scan_code);
+			if (scan_code == 73)
+				vga.reverseScroll();
+			if (scan_code == 81)
+				vga.scroll();
+            if (scan_code >= 59 and scan_code <= 66)
                 vga.changeScreen(scan_code - 59);
             return;
         },
+		else => {}
+			
+	}
+	if (keyboard_toggle == false)
+		return;
+
+    switch(scan_code)
+    {
         14 =>
         {
-            if(press != 0)
+            if (press != 0)
                 return;
-            vga.putChar(14);
+            vga.backspace();
             return;
         },
         42 =>
@@ -102,17 +119,17 @@ pub fn keyboardHandler(regs: *kernel.arch.idt.IDTRegister) void
         },
         58 =>
         {
-            if(!caps_lock and press == 0)
+            if (!caps_lock and press == 0)
                 caps_lock = true
-            else if(caps_lock and press == 0)
+            else if (caps_lock and press == 0)
                 caps_lock = false;
             return;
         },
         else =>
         {
-            if(press != 0)
+            if (press != 0)
                 return;
-            if(caps_on or caps_lock)
+            if (caps_on or caps_lock)
                 vga.putChar(@truncate(uppercase[scan_code]))
             else
                 vga.putChar(@truncate(lowercase[scan_code]));

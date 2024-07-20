@@ -22,20 +22,21 @@ pub const Color = enum(u8)
 
 const Screen = struct
 {
-    row: usize = 0,
-    column: usize = 1,
+    x: usize = 0,
+    y: usize = 1,
     curr_bg : Color = Color.BLACK,
     curr_fg : Color = Color.WHITE,
     color: u8 = computeColor(Color.WHITE, Color.BLACK),
-    buffer : [2000]u16 = [_]u16{getVal(' ', computeColor(Color.WHITE, Color.BLACK))} ** 2000,
+	pointer: u16 = 0,
+    buffer : [8000]u16 = [_]u16{getVal(' ', computeColor(Color.WHITE, Color.BLACK))} ** 8000,
 };
 
 const VGA = struct
 {
     height: usize = 25,
     width: usize = 80,
-    row: usize,
-    column: usize,
+    x: usize,
+    y: usize,
     color: u8,
     nav_color : u8,
     nav_triggered_color : u8,
@@ -58,8 +59,8 @@ fn getVal(uc: u16, color: u16) u16
 
 var vga = VGA
 {
-    .row = 0,
-    .column = 1,
+    .x = 0,
+    .y = 1,
     .color = computeColor(Color.WHITE, Color.BLACK),
     .nav_triggered_color = 0,
     .nav_color = 0,
@@ -69,7 +70,7 @@ var vga = VGA
 
 fn updateCursor() void
 {
-    const pos : u32 = vga.column * vga.width + @as(u16, @truncate(vga.row));
+    const pos : u32 = vga.y * vga.width + @as(u16, @truncate(vga.x));
 
     kernel.arch.ports.out(u8, 0x3D4, 0x0F);
     kernel.arch.ports.out(u8, 0x3D5, @as(u8, @truncate(pos)) & 0xFF);
@@ -81,20 +82,20 @@ pub fn changeScreen(targetScreen: u8) void
 {
     if(targetScreen == vga.currentScreen or targetScreen < 0 or targetScreen >= 8)
         return;
-    for (vga.buffer, 0..2000) |val, i|
-        vga.screensArray[vga.currentScreen].buffer[i] = val;
+    for (vga.width..2000) |i|
+        vga.screensArray[vga.currentScreen].buffer[vga.screensArray[vga.currentScreen].pointer * vga.width + i] = vga.buffer[i];
 
-    vga.screensArray[vga.currentScreen].row = vga.row;
-    vga.screensArray[vga.currentScreen].column = vga.column;
+    vga.screensArray[vga.currentScreen].x = vga.x;
+    vga.screensArray[vga.currentScreen].y = vga.y;
     vga.screensArray[vga.currentScreen].color = vga.color;
     vga.screensArray[vga.currentScreen].curr_bg = vga.curr_bg;
     vga.screensArray[vga.currentScreen].curr_fg = vga.curr_fg;
 
-    for (80..2000) |i|
-        vga.buffer[i] = vga.screensArray[targetScreen].buffer[i];
+    for (vga.width..2000) |i|
+        vga.buffer[i] = vga.screensArray[targetScreen].buffer[vga.screensArray[targetScreen].pointer * vga.width + i];
 
-    vga.row = vga.screensArray[targetScreen].row;
-    vga.column = vga.screensArray[targetScreen].column;
+    vga.x = vga.screensArray[targetScreen].x;
+    vga.y = vga.screensArray[targetScreen].y;
     vga.color = vga.screensArray[targetScreen].color;
     vga.curr_bg = vga.screensArray[targetScreen].curr_bg;
     vga.curr_fg = vga.screensArray[targetScreen].curr_fg;
@@ -106,7 +107,7 @@ pub fn changeScreen(targetScreen: u8) void
 fn updateNavbar() void
 {
     vga.color = vga.nav_color;
-	const values = [_]u8{'1','2','3','4','5','6','S','L'};
+	const values = [_]u8{'1','2','3','4','5','6','7','L'};
 	var i : u32 = 63;
     for(values) |c|
     {
@@ -124,6 +125,23 @@ fn updateNavbar() void
     }
 	putCharAt(' ', i, 0);
     vga.color = computeColor(vga.curr_fg, vga.curr_bg);
+}
+
+pub fn moveCursor(dir : u8) void
+{
+	if (dir == 75 and vga.x > 0)
+		vga.x -= 1;
+	if (dir == 72 and vga.y > 1)
+		vga.y -= 1;
+	if (dir == 77 and vga.x < vga.width - 1)
+		vga.x += 1;
+	if (dir == 80 and vga.y < vga.height - 1)
+		vga.y += 1;
+	if (dir == 72 and vga.y == 1)
+		reverseScroll();
+	if (dir == 80 and vga.y == vga.height - 1)
+		scroll();
+	updateCursor();
 }
 
 pub fn init(title : []const u8, title_color : u8, navbar_color : u8, triggered_color : u8) void
@@ -149,7 +167,9 @@ pub fn init(title : []const u8, title_color : u8, navbar_color : u8, triggered_c
     vga.nav_color = navbar_color;
     vga.nav_triggered_color = triggered_color;
     vga.color = computeColor(vga.curr_fg, vga.curr_bg);
-    vga.column = 1;
+    vga.y = 1;
+	for (80..1999) |i|
+		vga.buffer[i] = getVal(' ', computeColor(Color.WHITE, Color.BLACK));
     updateCursor();
     updateNavbar();
     kernel.logs.klogln("[VGA Driver] loaded");
@@ -162,27 +182,69 @@ fn putEntry(c: u8, color: u8, x: usize, y: usize) void
 
 pub fn reverseScroll() void
 {
-    for(0..(vga.height - 2)) |x|
-    {
-        for(0..vga.width) |y|
-            vga.buffer[x * vga.width + y] = vga.buffer[(x + 1) * vga.width + y];
-    }
-    for(0..vga.width) |y|
-        vga.buffer[y] = getVal(' ', vga.color);
+	var x : usize = vga.height - 2;
+	if (vga.screensArray[vga.currentScreen].pointer == 0)
+		return;
+	for (0..vga.width) |y|
+		vga.screensArray[vga.currentScreen].buffer[(vga.screensArray[vga.currentScreen].pointer + vga.height - 1) * vga.width + y] = vga.buffer[(vga.height - 1) * vga.width + y];
+	while (x > 0)
+	{
+		for(0..(vga.width - 1)) |y|
+            vga.buffer[(x + 1) * vga.width + y] = vga.buffer[x * vga.width + y];
+		x -= 1;
+	}
+	for (0..vga.width) |y|
+		vga.buffer[vga.width + y] = vga.screensArray[vga.currentScreen].buffer[(vga.screensArray[vga.currentScreen].pointer - 1) * vga.width + y];
+	vga.screensArray[vga.currentScreen].pointer -= 1;
+	if (vga.y < vga.height) 
+		vga.y += 1;
     updateCursor();
 }
 
 pub fn scroll() void
 {
+	if (vga.screensArray[vga.currentScreen].pointer == 75)
+		return;
+	for (0..vga.width) |y|
+		vga.screensArray[vga.currentScreen].buffer[vga.screensArray[vga.currentScreen].pointer * vga.width + y] = vga.buffer[vga.width + y];
     for(2..vga.height) |x|
     {
         for (0..vga.width) |y|
             vga.buffer[(x - 1) * vga.width + y] = vga.buffer[x * vga.width + y];
     }
     for(0..vga.width) |y|
-        vga.buffer[(vga.height - 1) * vga.width + y] = getVal(' ', vga.color);
-    vga.column -= 1;
+        vga.buffer[(vga.height - 1) * vga.width + y] = vga.screensArray[vga.currentScreen].buffer[(vga.screensArray[vga.currentScreen].pointer + vga.height) * vga.width + y];
+	if (vga.y > 1) 
+		vga.y -= 1 
+	else 
+		vga.x = 0;
+	vga.screensArray[vga.currentScreen].pointer += 1;
     updateCursor();
+}
+
+pub fn backspace() void
+{
+	if(vga.x == 0 and vga.y <= 1)
+        return;
+   	if(vga.x == 0 and vga.y != 0)
+    {
+        vga.x = vga.width - 1;
+        vga.y -= 1;
+		if (vga.buffer[vga.y * vga.width + vga.x] != getVal(' ', vga.color))
+		{
+			putCharAt(' ', vga.x, vga.y);
+			updateCursor();
+    		return;
+		}
+		while (vga.buffer[vga.y * vga.width + vga.x - 1] == getVal(' ', vga.color) and vga.x > 0)
+			vga.x -= 1;
+		updateCursor();
+        return ;
+    }
+    vga.x -= 1;
+    putCharAt(' ', vga.x, vga.y);
+    updateCursor();
+    return;
 }
 
 pub fn putChar(c: u8) void
@@ -190,31 +252,15 @@ pub fn putChar(c: u8) void
     if(c == 0)
         return;
     if(c >= ' ' and c <= 126)
-        putEntry(c, vga.color, vga.row, vga.column);
-    if(c == 14)
-    {
-        if(vga.row == 0 and vga.column <= 1)
-            return;
-        if(vga.row == 0 and vga.column != 0)
-        {
-            vga.row = vga.width;
-            vga.column -= 1;
-            putCharAt(' ', vga.row, vga.column);
-            return ;
-        }
-        vga.row -= 1;
-        putCharAt(' ', vga.row, vga.column);
-        updateCursor();
-        return;
-    }
+        putEntry(c, vga.color, vga.x, vga.y);
     if(c > 126)
         return;
-    vga.row += 1;
-    if(vga.row == vga.width or c == '\n')
+    vga.x += 1;
+    if(vga.x == vga.width or c == '\n')
     {
-        vga.row = 0;
-        vga.column += 1;
-        if(vga.column == vga.height)
+        vga.x = 0;
+        vga.y += 1;
+        if(vga.y == vga.height)
             scroll();
     }
     updateCursor();
@@ -254,7 +300,7 @@ pub fn clear(color: Color) void
         for(0..vga.width) |j|
             vga.buffer[i * vga.width + j] = getVal(' ', computeColor(Color.WHITE, color));
     }
-    vga.column = 0;
-    vga.row = 0;
+    vga.y = 0;
+    vga.x = 0;
     updateCursor();
 }

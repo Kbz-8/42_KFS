@@ -5,6 +5,7 @@ const logs = @import("log.zig");
 pub fn kpanic(message: []const u8) noreturn
 {
     @setCold(true);
+	arch.disableInts();
     vga.setColor(vga.Color.WHITE, vga.Color.RED);
     vga.clear(vga.Color.RED);
     vga.putString(logs.getLogBuffer());

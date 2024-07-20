@@ -10,3 +10,4 @@ Build/
 *.a
 *.exe
 zig-out/
+.gdb_*

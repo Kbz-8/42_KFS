@@ -153,7 +153,6 @@ pub fn init(title : []const u8, title_color : u8, navbar_color : u8, triggered_c
     updateCursor();
     updateNavbar();
     kernel.logs.klogln("[VGA Driver] loaded");
-    kernel.stk.stackTrace(42);
 }
 
 fn putEntry(c: u8, color: u8, x: usize, y: usize) void

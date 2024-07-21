@@ -196,7 +196,7 @@ pub fn init() bool
                     var dsdt_length: u32 = (@as(*const u32, @ptrFromInt(@intFromPtr(facp.DSDT) + 1))).* - 36;
                     while(dsdt_length > 0)
                     {
-                        if(kernel.memory.memcmp(S5_addr, "_S5_", 4) == 0)
+                        if(libk.memory.memcmp(S5_addr, "_S5_", 4) == 0)
                             break;
                         S5_addr += 1;
                         dsdt_length -= 1;

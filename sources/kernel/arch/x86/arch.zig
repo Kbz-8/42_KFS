@@ -16,9 +16,3 @@ pub fn disableInts() void
 {
     asm volatile("cli");
 }
-
-pub fn init() void
-{
-	idt.idtInit();
-    gdt.gdtInit();
-}

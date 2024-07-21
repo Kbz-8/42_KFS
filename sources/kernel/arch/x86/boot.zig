@@ -16,22 +16,44 @@ comptime
     );
 }
 
+const multiboot = @import("multiboot.zig");
+const boot = @import("../../boot.zig");
+
 pub export var kernel_stack: [32 * 1024]u8 align(16) linksection(".bss") = undefined;
 pub export var user_stack: [64 * 1024]u8 align(16) linksection(".bss") = undefined;
 
-extern fn kmain() void;
+var multiboot_info_addr: u32 = 0;
 
 export fn _start() align(16) linksection(".text.boot") callconv(.Naked) noreturn
 {
-    // Setup the stack and call kernel
+    // Get multiboot info address
+    multiboot_info_addr = asm
+    (
+        \\ mov %%ebx, %[res]
+        : [res] "=r" (-> u32)
+    );
+    // Setup the stack and call x86 init
     asm volatile
     (
         \\ movl %[stk], %esp
         \\ xor %ebp, %ebp
-        \\ call kmain
+        \\ call x86Init
         :
         : [stk] "{ecx}" (@intFromPtr(&kernel_stack) + @sizeOf(@TypeOf(kernel_stack))),
     );
     while(true)
         asm volatile("hlt");
+}
+
+const arch = @import("arch.zig");
+
+extern fn kmain() void;
+
+export fn x86Init() void
+{
+    @setCold(true);
+    arch.idt.idtInit();
+    arch.gdt.gdtInit();
+    multiboot.populateBootData(&boot.kboot_data, @ptrFromInt(multiboot_info_addr));
+    kmain();
 }

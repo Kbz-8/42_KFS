@@ -9,6 +9,7 @@ pub fn kputs(message: []const u8) void
 const ArgTypes = enum
 {
     Int,
+    Hex,
     Bool,
     Float,
     Char,
@@ -49,7 +50,13 @@ pub fn kprintf(comptime fmt: []const u8, args: anytype) void
                     else if(@typeInfo(@TypeOf(args[arg_idx])) == .Pointer)
                     {
                         const T = @typeInfo(@TypeOf(args[arg_idx])).Pointer;
-                        if(@typeInfo(T.child) == .Array and @typeInfo(T.child).Array.child == u8)
+                        if(T.child == u8)
+                        {
+                            var i: usize = 0;
+                            while(args[arg_idx][i] != 0) : (i += 1)
+                                vga.putChar(args[arg_idx][i]);
+                        }
+                        else if(@typeInfo(T.child) == .Array and @typeInfo(T.child).Array.child == u8)
                             kputs(args[arg_idx])
                         else
                         {
@@ -83,8 +90,20 @@ pub fn kprintf(comptime fmt: []const u8, args: anytype) void
                     },
                     .Char => vga.putChar(args[arg_idx]),
                     .Int => kputNb(args[arg_idx]),
+                    .Hex => { kputs("0x"); kputs(string.toStringBase(args[arg_idx], 16)); },
                     .Float => {},
-                    .String => kputs(args[arg_idx]),
+                    .String =>
+                    {
+                        const T = @typeInfo(@TypeOf(args[arg_idx])).Pointer;
+                        if(T.child == u8)
+                        {
+                            var i: usize = 0;
+                            while(args[arg_idx][i] != 0) : (i += 1)
+                                vga.putChar(args[arg_idx][i]);
+                        }
+                        else
+                            kputs(args[arg_idx]);
+                    },
                     .Pointer => { kputs("0x"); kputs(string.toStringBase(@intFromPtr(args[arg_idx]), 16)); },
                     else => {},
                 }
@@ -102,6 +121,7 @@ pub fn kprintf(comptime fmt: []const u8, args: anytype) void
                     'b' => arg_type = .Bool,
                     'c' => arg_type = .Char,
                     'i' => arg_type = .Int,
+                    'x' => arg_type = .Hex,
                     'f' => arg_type = .Float,
                     'p' => arg_type = .Pointer,
                     's' => arg_type = .String,

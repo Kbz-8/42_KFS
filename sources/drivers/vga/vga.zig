@@ -27,7 +27,7 @@ const Screen = struct
     curr_bg : Color = Color.BLACK,
     curr_fg : Color = Color.WHITE,
     color: u8 = computeColor(Color.WHITE, Color.BLACK),
-	pointer: u16 = 0,
+    pointer: u16 = 0,
     buffer : [8000]u16 = [_]u16{getVal(' ', computeColor(Color.WHITE, Color.BLACK))} ** 8000,
 };
 
@@ -107,41 +107,41 @@ pub fn changeScreen(targetScreen: u8) void
 fn updateNavbar() void
 {
     vga.color = vga.nav_color;
-	const values = [_]u8{'1','2','3','4','5','6','7','L'};
-	var i : u32 = 63;
+    const values = [_]u8{'1','2','3','4','5','6','7','L'};
+    var i : u32 = 63;
     for(values) |c|
     {
         putCharAt(' ', i, 0);
-		i += 1;
+        i += 1;
         if(@as(u8, @truncate((i - 63) / 2)) == vga.currentScreen)
         {
             vga.color = vga.nav_triggered_color;
             putCharAt(c, i, 0);
             vga.color = vga.nav_color;
         }
-		else
-			putCharAt(c, i, 0);
-		i += 1;
+        else
+            putCharAt(c, i, 0);
+        i += 1;
     }
-	putCharAt(' ', i, 0);
+    putCharAt(' ', i, 0);
     vga.color = computeColor(vga.curr_fg, vga.curr_bg);
 }
 
 pub fn moveCursor(dir : u8) void
 {
-	if (dir == 75 and vga.x > 0)
-		vga.x -= 1;
-	if (dir == 72 and vga.y > 1)
-		vga.y -= 1;
-	if (dir == 77 and vga.x < vga.width - 1)
-		vga.x += 1;
-	if (dir == 80 and vga.y < vga.height)
-		vga.y += 1;
-	if (dir == 72 and vga.y == 1)
-		reverseScroll();
-	if (dir == 80 and vga.y == vga.height)
-		scroll();
-	updateCursor();
+    if (dir == 75 and vga.x > 0)
+        vga.x -= 1;
+    if (dir == 72 and vga.y > 1)
+        vga.y -= 1;
+    if (dir == 77 and vga.x < vga.width - 1)
+        vga.x += 1;
+    if (dir == 80 and vga.y < vga.height)
+        vga.y += 1;
+    if (dir == 72 and vga.y == 1)
+        reverseScroll();
+    if (dir == 80 and vga.y == vga.height)
+        scroll();
+    updateCursor();
 }
 
 pub fn init(title : []const u8, title_color : u8, navbar_color : u8, triggered_color : u8) void
@@ -168,12 +168,11 @@ pub fn init(title : []const u8, title_color : u8, navbar_color : u8, triggered_c
     vga.nav_triggered_color = triggered_color;
     vga.color = computeColor(vga.curr_fg, vga.curr_bg);
     vga.y = 1;
-	for (80..1999) |i|
-		vga.buffer[i] = getVal(' ', computeColor(Color.WHITE, Color.BLACK));
+    for (80..1999) |i|
+        vga.buffer[i] = getVal(' ', computeColor(Color.WHITE, Color.BLACK));
     updateCursor();
     updateNavbar();
     kernel.logs.klogln("[VGA Driver] loaded");
-    kernel.stk.stackTrace(42);
 }
 
 fn putEntry(c: u8, color: u8, x: usize, y: usize) void

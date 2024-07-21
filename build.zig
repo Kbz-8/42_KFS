@@ -11,6 +11,7 @@ pub fn build(b: *std.Build) void
             .cpu_arch = .x86,
             .abi = .gnu,
             .os_tag = .freestanding,
+            .ofmt = .elf,
         }),
         .optimize = .Debug,
         .strip = !debug_symbols,

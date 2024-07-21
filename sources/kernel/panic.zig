@@ -9,7 +9,7 @@ pub fn kpanic(message: []const u8) noreturn
     vga.setColor(vga.Color.WHITE, vga.Color.RED);
     vga.clear(vga.Color.RED);
     vga.putString(logs.getLogBuffer());
-    stk.stackTrace(4);
+    stk.stackTrace(8);
     vga.putString("\nkernel panic : ");
     vga.putString(message);
     vga.putString("\n[cannot recover, freezing the system]");

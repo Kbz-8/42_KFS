@@ -1,6 +1,11 @@
 const vga = @import("drivers").vga;
 const string = @import("../strings/strings.zig");
 
+pub fn kputchar(c: u8) void
+{
+    vga.putChar(c);
+}
+
 pub fn kputs(message: []const u8) void
 {
     vga.putString(message);

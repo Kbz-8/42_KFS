@@ -1,5 +1,3 @@
-const std = @import("std");
-
 const libk = @import("libk");
 const boot = @import("../boot.zig");
 const elf32 = @import("../sys/elf32.zig");
@@ -41,7 +39,7 @@ pub fn stackTrace(max_frame_stack: usize) void
             symbol = @ptrFromInt(boot.kboot_data.symtab.?.sh_addr);
             for(0..boot.kboot_data.symtab_num) |_|
             {
-                if(elf32.stType(symbol.st_info) == elf32.ST_FUNC)
+                if(elf32.stType(symbol.st_info) == elf32.STT_FUNC)
                 {
                     if(stk.?.eip > symbol.st_value and stk.?.eip < symbol.st_value + symbol.st_size)
                     {

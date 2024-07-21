@@ -26,10 +26,25 @@ pub const arch = if(!is_test) switch(builtin.cpu.arch)
     else => unreachable,
 } else unreachable;
 
+const shell = @import("shell/dumb_shell.zig");
+
+var sh: shell.DumbShell = .{};
+
+fn screensWatcher(screen: u8) void
+{
+    if(screen == 0)
+        sh.run()
+    else
+        sh.pause();
+}
+
 export fn kmain() void
 {
     @setCold(true);
     drivers.initDrivers();
     logs.klogln("Welcome to RatiOS !");
+    drivers.vga.installScreenWatcher(screensWatcher);
+    sh.launch();
     drivers.shutdownDrivers();
+    drivers.power.shutdown();
 }

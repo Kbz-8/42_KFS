@@ -15,13 +15,13 @@ pub const SHT_HIPROC   = 0x7fffffff;
 pub const SHT_LOUSER   = 0x80000000;
 pub const SHT_HIUSER   = 0xffffffff;
 
-pub const ST_NOTYPE  = 0;
-pub const ST_OBJECT  = 1;
-pub const ST_FUNC    = 2;
-pub const ST_SECTION = 3;
-pub const ST_FILE    = 4;
-pub const ST_LOPROC  = 13;
-pub const ST_HIPROC  = 15;
+pub const STT_NOTYPE  = 0;
+pub const STT_OBJECT  = 1;
+pub const STT_FUNC    = 2;
+pub const STT_SECTION = 3;
+pub const STT_FILE    = 4;
+pub const STT_LOPROC  = 13;
+pub const STT_HIPROC  = 15;
 
 pub const SectionHeader = extern struct
 {

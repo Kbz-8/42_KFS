@@ -16,7 +16,7 @@ var PM1_CNT_LEN: u8 = 0;
 
 var ACPI_init: bool = false;
 
-const FACP = struct
+const FACP = extern struct
 {
     signature: [4]u8,
     length: u32,
@@ -108,10 +108,10 @@ fn getRSDP() !*u32
 
 fn checkHeader(ptr: *u32, sig: []const u8) bool
 {
-    if(libk.memory.memcmp(@as([*]u8, @ptrCast(ptr)), @as([*]u8, @ptrCast(@constCast(sig))), 4) != 0)
+    if(libk.mem.memcmp(@as([*]u8, @ptrCast(ptr)), @as([*]u8, @ptrCast(@constCast(sig))), 4) != 0)
         return false;
     var check_ptr: [*]u8 = @ptrCast(ptr);
-    var len: usize = @as(*usize, @ptrFromInt(@intFromPtr(ptr) + 1)).*;
+    var len: u32 = @as(*u32, @ptrFromInt(@intFromPtr(ptr) + @sizeOf(u32))).*;
     var check: u32 = 0;
     while(len > 0)
     {
@@ -122,20 +122,20 @@ fn checkHeader(ptr: *u32, sig: []const u8) bool
     return (@as(u8, @truncate(check)) == 0);
 }
 
-fn enable() i32
+pub fn enable() bool
 {
     // Check if ACPI is enabled
-    if(((kernel.arch.ports.in(u16, PM1a_CNT)) & SCI_EN) == 0)
+    if((kernel.arch.ports.in(u16, @truncate(PM1a_CNT.?.*)) & SCI_EN) == 0)
     {
         // Check if ACPI can be enabled
         if(SMI_CMD != null and ACPI_ENABLE != 0)
         {
-            kernel.arch.ports.out(u8, SMI_CMD.*, ACPI_ENABLE); // Send ACPI enable command
+            kernel.arch.ports.out(u8, @truncate(SMI_CMD.?.*), ACPI_ENABLE); // Send ACPI enable command
             // Give 3 seconds time to enable ACPI
             var i: u32 = 0;
             while(i < 300)
             {
-                if(((kernel.arch.ports.in(u16, PM1a_CNT)) & SCI_EN) == 1)
+                if((kernel.arch.ports.in(u16, @truncate(PM1a_CNT.?.*)) & SCI_EN) == 1)
                     break;
                 i += 1;
             }
@@ -143,7 +143,7 @@ fn enable() i32
             {
                 while(i < 300)
                 {
-                    if(((kernel.arch.ports.in(u16, PM1b_CNT)) & SCI_EN) == 1)
+                    if((kernel.arch.ports.in(u16, @truncate(PM1b_CNT.?.*)) & SCI_EN) == 1)
                         break;
                     i += 1;
                 }
@@ -151,22 +151,22 @@ fn enable() i32
             if(i < 300)
             {
                 kernel.logs.klogln("[ACPI] Enabled");
-                return 0;
+                return true;
             }
             else
             {
                 kernel.logs.klogln("[ACPI] Couldn't enable");
-                return -1;
+                return false;
             }
         }
         else
         {
             kernel.logs.klogln("[ACPI] Impossible to enable");
-            return -1;
+            return false;
         }
     }
     else // ACPI was already enabled
-        return 0;
+        return true;
 }
 
 pub fn init() bool
@@ -180,26 +180,25 @@ pub fn init() bool
     };
     if(checkHeader(ptr, "RSDT") or checkHeader(ptr, "XSDT"))
     {
-        var entries: i32 = @intCast((@as(*const u32, @ptrFromInt(@intFromPtr(ptr) + 1))).*);
+        var entries: i32 = @intCast((@as(*const u32, @ptrFromInt(@intFromPtr(ptr) + @sizeOf(u32)))).*);
         entries = @divFloor((entries - 36), 4);
-        ptr = @ptrFromInt(@intFromPtr(ptr) + (36 / 4)); // Skip header information
+        ptr = @ptrFromInt(@intFromPtr(ptr) + @sizeOf(u32) * (36 / 4)); // Skip header information
 
-        while(entries > 0)
+        while(entries > 0) : (entries -= 1)
         {
-            if(checkHeader(ptr, "FACP"))
+            if(checkHeader(@ptrFromInt(ptr.*), "FACP"))
             {
                 entries = -2;
-                const facp: FACP = @as(*FACP, @ptrCast(ptr)).*;
+                const facp: *FACP = @ptrFromInt(ptr.*);
                 if(checkHeader(facp.DSDT, "DSDT"))
                 {
-                    var S5_addr: [*]u8 = @ptrFromInt(@intFromPtr(facp.DSDT) + 36); // Skip header
-                    var dsdt_length: u32 = (@as(*const u32, @ptrFromInt(@intFromPtr(facp.DSDT) + 1))).* - 36;
-                    while(dsdt_length > 0)
+                    var S5_addr: [*]u8 = @ptrFromInt(@intFromPtr(facp.DSDT) + @sizeOf(u32) * 36); // Skip header
+                    var dsdt_length: u32 = (@as(*const u32, @ptrFromInt(@intFromPtr(facp.DSDT) + @sizeOf(u32)))).* - 36;
+                    while(dsdt_length > 0) : (dsdt_length -= 1)
                     {
-                        if(libk.memory.memcmp(S5_addr, "_S5_", 4) == 0)
+                        if(libk.mem.memcmp(S5_addr, "_S5_", 4) == 0)
                             break;
                         S5_addr += 1;
-                        dsdt_length -= 1;
                     }
                     if(dsdt_length > 0)
                     {
@@ -242,7 +241,7 @@ pub fn init() bool
                 else
                     kernel.logs.klogln("[ACPI] DSDT invalid");
             }
-            ptr = @ptrFromInt(@intFromPtr(ptr) + 1);
+            ptr = @ptrFromInt(@intFromPtr(ptr) + @sizeOf(u32));
         }
         kernel.logs.klogln("[ACPI] no valid FACP present");
     }
@@ -253,11 +252,10 @@ pub fn init() bool
 
 pub fn powerOff() void
 {
-    if(!ACPI_init || SCI_EN == 0)
+    if(!ACPI_init or SCI_EN == 0)
         return;
-    enable();
-    kernel.arch.ports.out(u16, @as(u32, PM1a_CNT.*), SLP_TYPa | SLP_EN);
+    kernel.arch.ports.out(u16, @as(u16, @truncate(PM1a_CNT.?.*)), SLP_TYPa | SLP_EN);
     if(PM1b_CNT != null)
-        kernel.arch.ports.out(@as(u32, PM1b_CNT.*), SLP_TYPb | SLP_EN);
+        kernel.arch.ports.out(u16, @as(u16, @truncate(PM1b_CNT.?.*)), SLP_TYPb | SLP_EN);
     kernel.logs.klogln("[ACPI] PowerOFF failed");
 }

@@ -6,14 +6,15 @@ pub fn init() void
     @setCold(true);
     kernel.logs.klogln("[Power Driver] loading...");
     kernel.logs.beginSection();
-    //if(!acpi.init())
-    if(true)
+    if(!acpi.init())
+    //if(true)
     {
         kernel.logs.endSection();
         kernel.logs.klogln("[Power Driver] couldn't load");
     }
     else
     {
+        _ = acpi.enable();
         kernel.logs.endSection();
         kernel.logs.klogln("[Power Driver] loaded");
     }
@@ -21,9 +22,10 @@ pub fn init() void
 
 pub fn shutdown() void
 {
-    // qemu shutdown; TODO : fix ACPI
+    acpi.powerOff();
+
+    // use QEMU shutdown in case ACPI did not work
     kernel.arch.ports.out(u16, 0x604, 0x2000);
-    //acpi.powerOff();
 }
 
 pub fn reboot() void

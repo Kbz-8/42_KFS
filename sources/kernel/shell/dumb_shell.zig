@@ -112,6 +112,8 @@ pub const DumbShell = struct
                 break
             else if(libk.str.streqlnt(&self.buffer, "exit"))
                 break
+            else if(libk.str.streqlnt(&self.buffer, "reboot"))
+                drivers.power.reboot()
             else if(libk.str.streqlnt(&self.buffer, "stack"))
                 stk.stackTrace(8)
             else if(libk.str.streqlnt(&self.buffer, "panic"))

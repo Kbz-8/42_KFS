@@ -28,4 +28,9 @@ pub fn shutdown() void
 
 pub fn reboot() void
 {
+    var good: u8 = 0x02;
+    while(good & 0x02 != 0)
+        good = kernel.arch.ports.in(u8, 0x64);
+    kernel.arch.ports.out(u8, 0x64, 0xFE);
+    kernel.arch.halt();
 }

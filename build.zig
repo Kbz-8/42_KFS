@@ -49,6 +49,7 @@ pub fn build(b: *std.Build) void
         "/bin/bash", "-c",
         std.mem.concat(b.allocator, u8, &[_][]const u8
         {
+            "sleep 1 && ",
             "mkdir -p ", iso_dir, "/boot/grub && ",
             "mv ", kernel_path, " ", iso_dir, "/boot/ && ",
             "cp sources/grub/grub.cfg ", iso_dir, "/boot/grub/ && ",

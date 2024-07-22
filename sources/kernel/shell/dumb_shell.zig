@@ -18,6 +18,10 @@ pub const DumbShell = struct
             const key: u32 = drivers.kb.getCurrentKeyPressed();
             if(self.halt)
             {
+                if(key == drivers.kb.PGUP)
+                    drivers.vga.reverseScroll()
+                else if(key == drivers.kb.PGDOWN)
+                    drivers.vga.scroll();
                 if(key == drivers.kb.LEFT)
                     drivers.vga.moveCursor(.Left)
                 else if(key == drivers.kb.RIGHT)
@@ -118,6 +122,8 @@ pub const DumbShell = struct
                 stk.stackTrace(8)
             else if(libk.str.streqlnt(&self.buffer, "panic"))
                 kpanic("shell request")
+            else if(libk.str.streqlnt(&self.buffer, "ratio"))
+                kpanic("ratio")
             else if(libk.str.streqlnt(&self.buffer, "stfu"))
                 drivers.kb.disableKeyboard()
             else if(libk.str.streqlnt(&self.buffer, "whoami"))

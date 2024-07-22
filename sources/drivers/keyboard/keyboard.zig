@@ -137,4 +137,3 @@ pub fn init() void
     kernel.arch.idt.irqInstallHandler(1, &keyboardHandler);
     kernel.logs.klogln("[PS/2 Keyboard Driver] loaded");
 }
-

@@ -70,15 +70,16 @@ pub const DumbShell = struct
             }
             else if(key == '\n')
             {
-				if (!drivers.vga.canScroll())
-					drivers.vga.scroll_buffer_clear(drivers.vga.Color.BLACK)
-				else
-                	libk.io.kputchar('\n');
+                if(!drivers.vga.canScroll())
+                    drivers.vga.scroll_buffer_clear(drivers.vga.Color.BLACK)
+                else
+                    libk.io.kputchar('\n');
                 return;
             }
             else if(key < 256) // to accept only printable keys
             {
-                libk.io.kputchar(@truncate(key));
+                if(libk.str.strlen(&self.buffer) == self.buffer.len)
+                    continue;
                 var j: usize = self.buffer.len - 1;
                 while(j > i) : (j -= 1)
                 {
@@ -86,8 +87,7 @@ pub const DumbShell = struct
                     self.buffer[j] = self.buffer[j - 1];
                 }
                 self.buffer[i] = @truncate(key);
-                if(libk.str.strlen(&self.buffer) == self.buffer.len)
-                    return;
+                libk.io.kputchar(@truncate(key));
                 i += 1;
             }
         }
@@ -137,22 +137,22 @@ pub const DumbShell = struct
                 libk.io.kputs(logs.getLogBuffer());
                 libk.io.kputs("================ Journal ================\n");
             }
-			else if (libk.str.streqlnt(&self.buffer, "help"))
-			{
-				libk.io.kputs("================ Help ================\n");
-				libk.io.kputs("shutdown/exit -> shutdown RatiOS\n");
-				libk.io.kputs("reboot -> reboot RatiOS\n");
-				libk.io.kputs("journal -> prints the kernel logs\n");
-				libk.io.kputs("stack -> prints the stack trace\n");
-				libk.io.kputs("panic -> trigger a kernel panic\n");
-				libk.io.kputs("stfu -> shutdown the keyboard\n");
-				libk.io.kputs("clear -> clears the shell\n");
-				libk.io.kputs("================ Help ================\n");
-			}
-			else if (libk.str.streqlnt(&self.buffer, "clear"))
-				drivers.vga.scroll_buffer_clear(drivers.vga.Color.BLACK)
-			else if (libk.str.streqlnt(&self.buffer, "maldavid"))
-				libk.io.kputs("t'es mauvais\n")
+            else if (libk.str.streqlnt(&self.buffer, "help"))
+            {
+                libk.io.kputs("================ Help ================\n");
+                libk.io.kputs("shutdown/exit -> shutdown RatiOS\n");
+                libk.io.kputs("reboot -> reboot RatiOS\n");
+                libk.io.kputs("journal -> prints the kernel logs\n");
+                libk.io.kputs("stack -> prints the stack trace\n");
+                libk.io.kputs("panic -> trigger a kernel panic\n");
+                libk.io.kputs("stfu -> shutdown the keyboard\n");
+                libk.io.kputs("clear -> clears the shell\n");
+                libk.io.kputs("================ Help ================\n");
+            }
+            else if (libk.str.streqlnt(&self.buffer, "clear"))
+                drivers.vga.scroll_buffer_clear(drivers.vga.Color.BLACK)
+            else if (libk.str.streqlnt(&self.buffer, "vvas"))
+                libk.io.kputs("t'es mauvais\n")
             else
                 libk.io.kprintf("command not found: {}, type help for help\n", .{ &self.buffer });
         }

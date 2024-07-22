@@ -134,6 +134,22 @@ pub const DumbShell = struct
                 libk.io.kputs(logs.getLogBuffer());
                 libk.io.kputs("================ Journal ================\n");
             }
+			else if (libk.str.streqlnt(&self.buffer, "help"))
+			{
+				libk.io.kputs("================ Help ================\n");
+				libk.io.kputs("shutdown/exit -> shutdown RatiOS\n");
+				libk.io.kputs("reboot -> reboot RatiOS\n");
+				libk.io.kputs("journal -> prints the kernel logs\n");
+				libk.io.kputs("stack -> prints the stack trace\n");
+				libk.io.kputs("panic -> trigger a kernel panic\n");
+				libk.io.kputs("stfu -> shutdown the keyboard\n");
+				libk.io.kputs("clear -> clears the shell\n");
+				libk.io.kputs("================ Help ================\n");
+			}
+			else if (libk.str.streqlnt(&self.buffer, "clear"))
+			{
+				drivers.vga.scroll_buffer_clear(drivers.vga.Color.BLACK);
+			}
             else
                 libk.io.kprintf("command not found: {}\n", .{ &self.buffer });
         }

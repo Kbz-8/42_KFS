@@ -1,5 +1,9 @@
 const kernel = @import("kernel");
 
+
+const SCREEN_SIZE = 2000;
+
+const SCROLL_BUFFER_SIZE = SCREEN_SIZE * 3;
 pub const Color = enum(u8)
 {
     BLACK = 0,
@@ -36,7 +40,7 @@ const Screen = struct
     curr_fg : Color = Color.WHITE,
     color: u8 = computeColor(Color.WHITE, Color.BLACK),
     pointer: u16 = 0,
-    buffer : [8000]u16 = [_]u16{getVal(' ', computeColor(Color.WHITE, Color.BLACK))} ** 8000,
+    buffer : [SCROLL_BUFFER_SIZE]u16 = [_]u16{getVal(' ', computeColor(Color.WHITE, Color.BLACK))} ** SCROLL_BUFFER_SIZE,
 };
 
 const VGA = struct
@@ -76,7 +80,7 @@ pub fn changeScreen(target_screen: u8) void
 {
     if(target_screen == vga.current_screen or target_screen < 0 or target_screen >= 8)
         return;
-    for(vga.width..2000) |i|
+    for(vga.width..SCREEN_SIZE) |i|
         vga.screens_array[vga.current_screen].buffer[vga.screens_array[vga.current_screen].pointer * vga.width + i] = vga.buffer[i];
 
     vga.screens_array[vga.current_screen].x = vga.x;
@@ -85,7 +89,7 @@ pub fn changeScreen(target_screen: u8) void
     vga.screens_array[vga.current_screen].curr_bg = vga.curr_bg;
     vga.screens_array[vga.current_screen].curr_fg = vga.curr_fg;
 
-    for(vga.width..2000) |i|
+    for(vga.width..SCREEN_SIZE) |i|
         vga.buffer[i] = vga.screens_array[target_screen].buffer[vga.screens_array[target_screen].pointer * vga.width + i];
 
     vga.x = vga.screens_array[target_screen].x;
@@ -141,7 +145,7 @@ pub fn init(title : []const u8, title_color : u8, navbar_color : u8, triggered_c
     vga.nav_triggered_color = triggered_color;
     vga.color = computeColor(vga.curr_fg, vga.curr_bg);
     vga.y = 1;
-    for(80..1999) |i|
+    for(80..SCREEN_SIZE - 1) |i|
         vga.buffer[i] = getVal(' ', computeColor(Color.WHITE, Color.BLACK));
     updateCursor();
     updateNavbar();
@@ -261,13 +265,23 @@ pub fn setColor(fg: Color, bg: Color) void
     vga.curr_bg = bg;
 }
 
+pub fn scroll_buffer_clear(color: Color) void
+{
+    for(0..SCROLL_BUFFER_SIZE) |i|
+        vga.screens_array[vga.current_screen].buffer[i] = getVal(' ', computeColor(Color.WHITE, color));
+	for (80..SCREEN_SIZE) |i|
+		vga.buffer[i] = getVal(' ', computeColor(Color.WHITE, color));
+    vga.y = 1;
+    vga.x = 0;
+    updateCursor();
+}
+
 pub fn clear(color: Color) void
 {
-    for(0..vga.height) |i|
-    {
-        for(0..vga.width) |j|
-            vga.buffer[i * vga.width + j] = getVal(' ', computeColor(Color.WHITE, color));
-    }
+    for(0..SCROLL_BUFFER_SIZE) |i|
+        vga.screens_array[vga.current_screen].buffer[i] = getVal(' ', computeColor(Color.WHITE, color));
+	for (0..SCREEN_SIZE) |i|
+		vga.buffer[i] = getVal(' ', computeColor(Color.WHITE, color));
     vga.y = 0;
     vga.x = 0;
     updateCursor();

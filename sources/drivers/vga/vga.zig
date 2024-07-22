@@ -113,7 +113,7 @@ pub fn moveCursor(dir : Direction) void
        vga.y -= 1;
     if(dir == .Right and vga.x < vga.width - 1)
        vga.x += 1;
-    if(dir == .Down and vga.y < vga.height)
+    if(dir == .Down and vga.y < vga.height and canScroll())
        vga.y += 1;
     if(dir == .Up and vga.y == 1)
        reverseScroll();
@@ -229,14 +229,19 @@ pub fn putChar(c: u8) void
     if(c == 0)
         return;
     if(c >= ' ' and c <= 126)
+	{
         putEntry(c, vga.color, vga.x, vga.y);
+		vga.x += 1;
+	}
     if(c > 126)
         return;
-    vga.x += 1;
     if(vga.x == vga.width or c == '\n')
     {
-        vga.x = 0;
-        vga.y += 1;
+		if (canScroll() or vga.y != vga.height - 1)
+		{
+	        vga.x = 0;
+	        vga.y += 1;
+		}
         if(vga.y == vga.height)
             scroll();
     }

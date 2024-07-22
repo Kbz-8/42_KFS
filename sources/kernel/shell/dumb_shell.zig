@@ -151,7 +151,7 @@ pub const DumbShell = struct
             }
             else if (libk.str.streqlnt(&self.buffer, "clear"))
                 drivers.vga.scroll_buffer_clear(drivers.vga.Color.BLACK)
-            else if (libk.str.streqlnt(&self.buffer, "vvas"))
+            else if (libk.str.streqlnt(&self.buffer, "vvaas"))
                 libk.io.kputs("t'es mauvais\n")
             else
                 libk.io.kprintf("command not found: {}, type help for help\n", .{ &self.buffer });

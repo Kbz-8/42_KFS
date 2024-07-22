@@ -228,7 +228,7 @@ pub fn putChar(c: u8) void
 {
     if(c == 0)
         return;
-    if(c >= ' ' and c <= 126)
+    if(c >= ' ' and c <= 126 and vga.x != vga.width)
 	{
         putEntry(c, vga.color, vga.x, vga.y);
 		vga.x += 1;
@@ -244,6 +244,8 @@ pub fn putChar(c: u8) void
 		}
         if(vga.y == vga.height)
             scroll();
+		if (vga.x == vga.width and vga.y == vga.height - 1 and canScroll() == false)
+			return ;
     }
     updateCursor();
 }

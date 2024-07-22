@@ -21,7 +21,7 @@ pub const DumbShell = struct
                 if(key == drivers.kb.PGUP)
                     drivers.vga.reverseScroll()
                 else if(key == drivers.kb.PGDOWN)
-                    drivers.vga.scroll();
+                    _ = drivers.vga.scroll();
                 if(key == drivers.kb.LEFT)
                     drivers.vga.moveCursor(.Left)
                 else if(key == drivers.kb.RIGHT)
@@ -70,7 +70,10 @@ pub const DumbShell = struct
             }
             else if(key == '\n')
             {
-                libk.io.kputchar('\n');
+				if (!drivers.vga.canScroll())
+					drivers.vga.scroll_buffer_clear(drivers.vga.Color.BLACK)
+				else
+                	libk.io.kputchar('\n');
                 return;
             }
             else if(key < 256) // to accept only printable keys
@@ -147,11 +150,11 @@ pub const DumbShell = struct
 				libk.io.kputs("================ Help ================\n");
 			}
 			else if (libk.str.streqlnt(&self.buffer, "clear"))
-			{
-				drivers.vga.scroll_buffer_clear(drivers.vga.Color.BLACK);
-			}
+				drivers.vga.scroll_buffer_clear(drivers.vga.Color.BLACK)
+			else if (libk.str.streqlnt(&self.buffer, "maldavid"))
+				libk.io.kputs("t'es mauvais\n")
             else
-                libk.io.kprintf("command not found: {}\n", .{ &self.buffer });
+                libk.io.kprintf("command not found: {}, type help for help\n", .{ &self.buffer });
         }
     }
 };

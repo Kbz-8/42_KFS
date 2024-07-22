@@ -3,7 +3,8 @@ const kernel = @import("kernel");
 
 const SCREEN_SIZE = 2000;
 
-const SCROLL_BUFFER_SIZE = SCREEN_SIZE * 3;
+const SCROLL_BUFFER_SIZE = SCREEN_SIZE * 4;
+
 pub const Color = enum(u8)
 {
     BLACK = 0,
@@ -43,7 +44,7 @@ const Screen = struct
     buffer : [SCROLL_BUFFER_SIZE]u16 = [_]u16{getVal(' ', computeColor(Color.WHITE, Color.BLACK))} ** SCROLL_BUFFER_SIZE,
 };
 
-const VGA = struct
+pub const VGA = struct
 {
     height: usize = 25,
     width: usize = 80,
@@ -60,7 +61,7 @@ const VGA = struct
     current_screen: u8,
 };
 
-var vga = VGA
+pub var vga = VGA
 {
     .x = 0,
     .y = 1,
@@ -152,6 +153,10 @@ pub fn init(title : []const u8, title_color : u8, navbar_color : u8, triggered_c
     kernel.logs.klogln("[VGA Driver] loaded");
 }
 
+pub fn canScroll() bool
+{
+	return (vga.screens_array[vga.current_screen].pointer < 59);
+}
 pub fn reverseScroll() void
 {
     var x : usize = vga.height - 2;
@@ -175,7 +180,7 @@ pub fn reverseScroll() void
 
 pub fn scroll() void
 {
-    if(vga.screens_array[vga.current_screen].pointer == 75)
+    if(vga.screens_array[vga.current_screen].pointer == 59)
         return;
     for(0..vga.width) |y|
         vga.screens_array[vga.current_screen].buffer[vga.screens_array[vga.current_screen].pointer * vga.width + y] = vga.buffer[vga.width + y];
@@ -271,6 +276,7 @@ pub fn scroll_buffer_clear(color: Color) void
         vga.screens_array[vga.current_screen].buffer[i] = getVal(' ', computeColor(Color.WHITE, color));
 	for (80..SCREEN_SIZE) |i|
 		vga.buffer[i] = getVal(' ', computeColor(Color.WHITE, color));
+	vga.screens_array[vga.current_screen].pointer = 0;
     vga.y = 1;
     vga.x = 0;
     updateCursor();

@@ -7,7 +7,7 @@ var caps_on: bool = false;
 var caps_lock: bool = false;
 var num_lock: bool = false;
 
-var keyboard_toggle : bool = true;
+var keyboard_toggle: bool = true;
 
 pub const UNKNOWN = 0xFFFFFFFF;
 pub const ESC = 0xFFFFFFFF - 1;
@@ -44,94 +44,66 @@ pub const ALTGR = 0xFFFFFFFF - 31;
 pub const NUMLCK = 0xFFFFFFFF - 32;
 pub const BACKSPACE = 0x08;
 
-const lowercase = [128]u32 {
-    UNKNOWN,ESC,'1','2','3','4','5','6','7','8',
-    '9','0','-','=',BACKSPACE,'\t','q','w','e','r',
-    't','y','u','i','o','p','[',']','\n',CTRL,
-    'a','s','d','f','g','h','j','k','l',';',
-    '\'','`',LSHFT,'\\','z','x','c','v','b','n','m',',',
-    '.','/',RSHFT,'*',ALT,' ',CAPS,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,NUMLCK,SCRLCK,HOME,UP,PGUP,'-',LEFT,UNKNOWN,RIGHT,
-    '+',END,DOWN,PGDOWN,INS,DEL,UNKNOWN,UNKNOWN,UNKNOWN,F11,F12,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,
-    UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,
-    UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,
-    UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN
-};
+const lowercase = [128]u32{ UNKNOWN, ESC, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', BACKSPACE, '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n', CTRL, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', LSHFT, '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', RSHFT, '*', ALT, ' ', CAPS, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, NUMLCK, SCRLCK, HOME, UP, PGUP, '-', LEFT, UNKNOWN, RIGHT, '+', END, DOWN, PGDOWN, INS, DEL, UNKNOWN, UNKNOWN, UNKNOWN, F11, F12, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN };
 
-const uppercase = [128]u32 {
-    UNKNOWN,ESC,'!','@','#','$','%','^','&','*','(',')','_','+',BACKSPACE,'\t','Q','W','E','R',
-    'T','Y','U','I','O','P','{','}','\n',CTRL,'A','S','D','F','G','H','J','K','L',':','"','~',LSHFT,'|','Z','X','C',
-    'V','B','N','M','<','>','?',RSHFT,'*',ALT,' ',CAPS,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,NUMLCK,SCRLCK,HOME,UP,PGUP,'-',
-    LEFT,UNKNOWN,RIGHT,'+',END,DOWN,PGDOWN,INS,DEL,UNKNOWN,UNKNOWN,UNKNOWN,F11,F12,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,
-    UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,
-    UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,
-    UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN
-};
+const uppercase = [128]u32{ UNKNOWN, ESC, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', BACKSPACE, '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n', CTRL, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~', LSHFT, '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', RSHFT, '*', ALT, ' ', CAPS, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, NUMLCK, SCRLCK, HOME, UP, PGUP, '-', LEFT, UNKNOWN, RIGHT, '+', END, DOWN, PGDOWN, INS, DEL, UNKNOWN, UNKNOWN, UNKNOWN, F11, F12, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN };
 
 var current_key_pressed: u32 = 0;
 
-pub fn getCurrentKeyPressed() u32
-{
+pub fn getCurrentKeyPressed() u32 {
     const ret = current_key_pressed;
     current_key_pressed = 0; // reset key to avoid stupidly fast key repeat
     return ret;
 }
 
-pub fn disableKeyboard() void
-{
+pub fn disableKeyboard() void {
     keyboard_toggle = false;
 }
 
-pub fn keyboardHandler(regs: *kernel.arch.idt.IDTRegister) void
-{
+pub fn keyboardHandler(regs: *kernel.arch.idt.IDTRegister) void {
     _ = regs;
     const scan_code = kernel.arch.ports.in(u8, 0x60) & 0x7F;
     const press = kernel.arch.ports.in(u8, 0x60) & 0x80;
 
-    switch(scan_code)
-    {
+    switch (scan_code) {
         59...66, 69 => // control keys
         {
-            if(scan_code == 69)
-            {
-                if(!caps_lock and press == 0)
+            if (scan_code == 69) {
+                if (!caps_lock and press == 0)
                     caps_lock = true
-                else if(caps_lock and press == 0)
+                else if (caps_lock and press == 0)
                     caps_lock = false;
                 return;
             }
-            if(press != 0)
+            if (press != 0)
                 current_key_pressed = 0
-            else if(scan_code >= 59 and scan_code <= 66)
+            else if (scan_code >= 59 and scan_code <= 66)
                 vga.changeScreen(scan_code - 59);
             return;
         },
-        else => {}
+        else => {},
     }
 
-    if(keyboard_toggle == false)
+    if (keyboard_toggle == false)
         return;
 
-    switch(scan_code)
-    {
-        42, 54 =>
-        {
+    switch (scan_code) {
+        42, 54 => {
             caps_on = press == 0;
             return;
         },
-        else =>
-        {
-            if(press != 0)
+        else => {
+            if (press != 0)
                 current_key_pressed = 0
-            else if(caps_on or caps_lock)
+            else if (caps_on or caps_lock)
                 current_key_pressed = uppercase[scan_code]
             else
                 current_key_pressed = lowercase[scan_code];
-        }
+        },
     }
 }
 
-pub fn init() void
-{
+pub fn init() void {
     @setCold(true);
     kernel.logs.klogln("[PS/2 Keyboard Driver] loading...");
     kernel.arch.idt.irqInstallHandler(1, &keyboardHandler);

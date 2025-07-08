@@ -1,7 +1,5 @@
-comptime
-{
-    asm
-    (
+comptime {
+    asm (
         \\ .set ALIGN,    1 << 0
         \\ .set MEMINFO,  1 << 1
         \\ .set FLAGS,    ALIGN | MEMINFO
@@ -24,33 +22,29 @@ pub export var user_stack: [64 * 1024]u8 align(16) linksection(".bss") = undefin
 
 var multiboot_info_addr: u32 = 0;
 
-export fn _start() align(16) linksection(".text.boot") callconv(.Naked) noreturn
-{
+export fn _start() align(16) linksection(".text.boot") callconv(.Naked) noreturn {
     // Get multiboot info address
-    multiboot_info_addr = asm
-    (
+    multiboot_info_addr = asm (
         \\ mov %%ebx, %[res]
-        : [res] "=r" (-> u32)
+        : [res] "=r" (-> u32),
     );
     // Setup the stack and call x86 init
-    asm volatile
-    (
+    asm volatile (
         \\ movl %[stk], %esp
         \\ xor %ebp, %ebp
         \\ call x86Init
         :
         : [stk] "{ecx}" (@intFromPtr(&kernel_stack) + @sizeOf(@TypeOf(kernel_stack))),
     );
-    while(true)
-        asm volatile("hlt");
+    while (true)
+        asm volatile ("hlt");
 }
 
 const arch = @import("arch.zig");
 
 extern fn kmain() void;
 
-export fn x86Init() void
-{
+export fn x86Init() void {
     @setCold(true);
     arch.idt.idtInit();
     arch.gdt.gdtInit();

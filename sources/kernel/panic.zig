@@ -3,8 +3,7 @@ const arch = @import("kmain.zig").arch;
 const logs = @import("log.zig");
 const stk = @import("debug/stack_trace.zig");
 
-pub fn kpanic(message: []const u8) noreturn
-{
+pub fn kpanic(message: []const u8) noreturn {
     @setCold(true);
     vga.setColor(vga.Color.WHITE, vga.Color.RED);
     vga.scroll_buffer_clear(vga.Color.RED);
@@ -13,8 +12,7 @@ pub fn kpanic(message: []const u8) noreturn
     vga.putString("\nkernel panic : ");
     vga.putString(message);
     vga.putString("\n[cannot recover, freezing the system]");
-    while(true)
-    {
+    while (true) {
         arch.disableInts();
         arch.halt();
     }

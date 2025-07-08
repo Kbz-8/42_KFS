@@ -1,22 +1,14 @@
-pub fn in(comptime Type: type, port: u16) Type
-{
-    return switch(Type)
-    {
-        u8 => asm volatile
-        (
-            "inb %[port], %[result]"
+pub fn in(comptime Type: type, port: u16) Type {
+    return switch (Type) {
+        u8 => asm volatile ("inb %[port], %[result]"
             : [result] "={al}" (-> Type),
             : [port] "N{dx}" (port),
         ),
-        u16 => asm volatile
-        (
-            "inw %[port], %[result]"
+        u16 => asm volatile ("inw %[port], %[result]"
             : [result] "={ax}" (-> Type),
             : [port] "N{dx}" (port),
         ),
-        u32 => asm volatile
-        (
-            "inl %[port], %[result]"
+        u32 => asm volatile ("inl %[port], %[result]"
             : [result] "={eax}" (-> Type),
             : [port] "N{dx}" (port),
         ),
@@ -24,27 +16,19 @@ pub fn in(comptime Type: type, port: u16) Type
     };
 }
 
-pub fn out(comptime Type: type, port: u16, data: Type) void
-{
-    switch(Type)
-    {
-        u8 => asm volatile
-        (
-            "outb %[data], %[port]"
+pub fn out(comptime Type: type, port: u16, data: Type) void {
+    switch (Type) {
+        u8 => asm volatile ("outb %[data], %[port]"
             :
             : [port] "{dx}" (port),
               [data] "{al}" (data),
         ),
-        u16 => asm volatile
-        (
-            "outw %[data], %[port]"
+        u16 => asm volatile ("outw %[data], %[port]"
             :
             : [port] "{dx}" (port),
               [data] "{ax}" (data),
         ),
-        u32 => asm volatile
-        (
-            "outl %[data], %[port]"
+        u32 => asm volatile ("outl %[data], %[port]"
             :
             : [port] "{dx}" (port),
               [data] "{eax}" (data),

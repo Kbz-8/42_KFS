@@ -1,12 +1,9 @@
 const builtin = @import("builtin");
 const is_test = builtin.is_test;
 
-comptime
-{
-    if(!is_test)
-    {
-        switch(builtin.cpu.arch)
-        {
+comptime {
+    if (!is_test) {
+        switch (builtin.cpu.arch) {
             .x86 => _ = @import("arch/x86/boot.zig"),
             else => unreachable,
         }
@@ -20,8 +17,7 @@ pub const boot = @import("boot.zig");
 pub const logs = @import("log.zig");
 pub const kpanic = @import("panic.zig").kpanic;
 
-pub const arch = if(!is_test) switch(builtin.cpu.arch)
-{
+pub const arch = if (!is_test) switch (builtin.cpu.arch) {
     .x86 => @import("arch/x86/arch.zig"),
     else => unreachable,
 } else unreachable;
@@ -30,16 +26,14 @@ const shell = @import("shell/dumb_shell.zig");
 
 var sh: shell.DumbShell = .{};
 
-fn screensWatcher(screen: u8) void
-{
-    if(screen == 0)
+fn screensWatcher(screen: u8) void {
+    if (screen == 0)
         sh.run()
     else
         sh.pause();
 }
 
-export fn kmain() void
-{
+export fn kmain() void {
     @setCold(true);
     drivers.initDrivers();
     logs.klogln("Welcome to RatiOS !");

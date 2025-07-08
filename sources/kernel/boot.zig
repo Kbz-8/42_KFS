@@ -1,7 +1,6 @@
 const elf32 = @import("sys/elf32.zig");
 
-pub const Boot = struct
-{
+pub const Boot = struct {
     cmdline: [*:0]const u8 = undefined,
     total_mem: usize = 0,
 

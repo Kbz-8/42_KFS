@@ -1,51 +1,10 @@
 const boot = @import("boot.zig");
 
-const GDTEntry = packed struct
-{
-    limit: u16,
-    base_low: u16,
-    base_middle: u8,
-    access: u8,
-    flags: u8,
-    base_high: u8
-};
+const GDTEntry = packed struct { limit: u16, base_low: u16, base_middle: u8, access: u8, flags: u8, base_high: u8 };
 
-const TSSEntry = packed struct
-{
-    prev_tss: u32,
-    esp0: u32,
-    ss0: u32,
-    esp1: u32,
-    ss1: u32,
-    esp2: u32,
-    ss2: u32,
-    cr3: u32,
-    eip: u32,
-    eflags: u32,
-    eax: u32,
-    ecx: u32,
-    edx: u32,
-    ebx: u32,
-    esp: u32,
-    ebp: u32,
-    esi: u32,
-    edi: u32,
-    es: u32,
-    cs: u32,
-    ss: u32,
-    ds: u32,
-    fs: u32,
-    gs: u32,
-    ldt: u32,
-    trap: u32,
-    iomap_base: u32
-};
+const TSSEntry = packed struct { prev_tss: u32, esp0: u32, ss0: u32, esp1: u32, ss1: u32, esp2: u32, ss2: u32, cr3: u32, eip: u32, eflags: u32, eax: u32, ecx: u32, edx: u32, ebx: u32, esp: u32, ebp: u32, esi: u32, edi: u32, es: u32, cs: u32, ss: u32, ds: u32, fs: u32, gs: u32, ldt: u32, trap: u32, iomap_base: u32 };
 
-const GDTPointer = packed struct
-{
-    limit: u16,
-    base: *GDTEntry
-};
+const GDTPointer = packed struct { limit: u16, base: *GDTEntry };
 
 var gdt_entries: *[8]GDTEntry = @ptrFromInt(0x800);
 
@@ -81,10 +40,8 @@ var tss_entry: TSSEntry = .{
 
 var gdt_pointer: GDTPointer = undefined;
 
-comptime
-{
-    asm
-    (
+comptime {
+    asm (
         \\ .type gdtFlush, @function
         \\ gdtFlush:
         \\     mov +4(%esp), %eax
@@ -100,10 +57,8 @@ comptime
     );
 }
 
-comptime
-{
-    asm
-    (
+comptime {
+    asm (
         \\ .type tssFlush, @function
         \\ tssFlush:
         \\     mov $0x38, %ax
@@ -116,8 +71,7 @@ extern fn gdtFlush(*const GDTPointer) void;
 
 extern fn tssFlush() void;
 
-fn writeTSS(num: u32, ss0: u16, esp0: u32) void
-{
+fn writeTSS(num: u32, ss0: u16, esp0: u32) void {
     const base: u32 = @intFromPtr(&tss_entry);
     const limit: u32 = base + @sizeOf(TSSEntry);
 
@@ -133,25 +87,23 @@ fn writeTSS(num: u32, ss0: u16, esp0: u32) void
     tss_entry.gs = 0x10 | 0x3;
 }
 
-pub fn gdtInit() void
-{
+pub fn gdtInit() void {
     gdt_pointer.limit = @sizeOf(GDTEntry) * 8 - 1;
     gdt_pointer.base = &gdt_entries[0];
 
     gdtSetGate(0, 0, 0, 0, 0);
     gdtSetGate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
     gdtSetGate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
-	gdtSetGate(3, @intFromPtr(&boot.kernel_stack), @sizeOf(@TypeOf(boot.kernel_stack)) - 1, 0x92, 0xCF);
+    gdtSetGate(3, @intFromPtr(&boot.kernel_stack), @sizeOf(@TypeOf(boot.kernel_stack)) - 1, 0x92, 0xCF);
     gdtSetGate(4, 0, 0xFFFFFFFF, 0xFA, 0xCF);
     gdtSetGate(5, 0, 0xFFFFFFFF, 0xF2, 0xCF);
-	gdtSetGate(6, @intFromPtr(&boot.user_stack), @sizeOf(@TypeOf(boot.user_stack)) - 1, 0xF2, 0xCF);
+    gdtSetGate(6, @intFromPtr(&boot.user_stack), @sizeOf(@TypeOf(boot.user_stack)) - 1, 0xF2, 0xCF);
     writeTSS(7, 0x10, @intFromPtr(&boot.kernel_stack));
     gdtFlush(&gdt_pointer);
     tssFlush();
 }
 
-pub fn gdtSetGate(num: u32, base: u32, limit: u32, access: u8, flags: u8) void
-{
+pub fn gdtSetGate(num: u32, base: u32, limit: u32, access: u8, flags: u8) void {
     gdt_entries[num].base_low = @truncate(base);
     gdt_entries[num].base_middle = @truncate(base >> 16);
     gdt_entries[num].base_high = @truncate(base >> 24);

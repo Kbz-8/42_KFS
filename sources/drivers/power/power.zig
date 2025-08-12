@@ -2,7 +2,7 @@ const kernel = @import("kernel");
 const acpi = @import("acpi.zig");
 
 pub fn init() void {
-    @setCold(true);
+    @branchHint(.cold);
     kernel.logs.klogln("[Power Driver] loading...");
     kernel.logs.beginSection();
     if (!acpi.init())

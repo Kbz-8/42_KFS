@@ -1,18 +1,19 @@
-comptime {
-    asm (
-        \\ .set ALIGN,    1 << 0
-        \\ .set MEMINFO,  1 << 1
-        \\ .set FLAGS,    ALIGN | MEMINFO
-        \\ .set MAGIC,    0x1BADB002
-        \\ .set CHECKSUM, -(MAGIC + FLAGS)
-        \\
-        \\ .section .multiboot
-        \\ .align 4
-        \\ .long MAGIC
-        \\ .long FLAGS
-        \\ .long CHECKSUM
-    );
-}
+const ALIGN = 1 << 0;
+const MEMINFO = 1 << 1;
+const MAGIC = 0x1BADB002;
+const FLAGS = ALIGN | MEMINFO;
+
+const MultibootHeader = packed struct {
+    magic: i32 = MAGIC,
+    flags: i32,
+    checksum: i32,
+    padding: u32 = 0,
+};
+
+export var _: MultibootHeader align(4) linksection(".multiboot") = .{
+    .flags = FLAGS,
+    .checksum = -(MAGIC + FLAGS),
+};
 
 const multiboot = @import("multiboot.zig");
 const boot = @import("../../boot.zig");
@@ -22,7 +23,7 @@ pub export var user_stack: [64 * 1024]u8 align(16) linksection(".bss") = undefin
 
 var multiboot_info_addr: u32 = 0;
 
-export fn _start() align(16) linksection(".text.boot") callconv(.Naked) noreturn {
+export fn _start() align(16) linksection(".text.boot") callconv(.naked) noreturn {
     // Get multiboot info address
     multiboot_info_addr = asm (
         \\ mov %%ebx, %[res]
@@ -45,7 +46,7 @@ const arch = @import("arch.zig");
 extern fn kmain() void;
 
 export fn x86Init() void {
-    @setCold(true);
+    @branchHint(.cold);
     arch.idt.idtInit();
     arch.gdt.gdtInit();
     multiboot.populateBootData(&boot.kboot_data, @ptrFromInt(multiboot_info_addr));

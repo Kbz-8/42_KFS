@@ -9,7 +9,7 @@ pub fn kputs(message: []const u8) void {
     vga.putString(message);
 }
 
-const ArgTypes = enum { Int, Hex, Bool, Float, Char, String, Pointer, Null };
+const ArgTypes = enum { Int, Hex, Bool, Float, Char, String, pointer, Null };
 
 pub fn kprintf(comptime fmt: []const u8, args: anytype) void {
     comptime var arg_idx: usize = 0;
@@ -30,15 +30,15 @@ pub fn kprintf(comptime fmt: []const u8, args: anytype) void {
                             vga.putChar(args[arg_idx])
                         else
                             kputNb(args[arg_idx]);
-                    } else if (@typeInfo(@TypeOf(args[arg_idx])) == .Array and @typeInfo(@TypeOf(args[arg_idx])).Array.child == u8)
+                    } else if (@typeInfo(@TypeOf(args[arg_idx])) == .array and @typeInfo(@TypeOf(args[arg_idx])).array.child == u8)
                         kputs(args[arg_idx])
-                    else if (@typeInfo(@TypeOf(args[arg_idx])) == .Pointer) {
-                        const T = @typeInfo(@TypeOf(args[arg_idx])).Pointer;
+                    else if (@typeInfo(@TypeOf(args[arg_idx])) == .pointer) {
+                        const T = @typeInfo(@TypeOf(args[arg_idx])).pointer;
                         if (T.child == u8) {
                             var i: usize = 0;
                             while (args[arg_idx][i] != 0) : (i += 1)
                                 vga.putChar(args[arg_idx][i]);
-                        } else if (@typeInfo(T.child) == .Array and @typeInfo(T.child).Array.child == u8)
+                        } else if (@typeInfo(T.child) == .array and @typeInfo(T.child).array.child == u8)
                             kputs(args[arg_idx])
                         else {
                             kputs("0x");
@@ -74,14 +74,14 @@ pub fn kprintf(comptime fmt: []const u8, args: anytype) void {
                     },
                     .Float => {},
                     .String => {
-                        const T = @typeInfo(@TypeOf(args[arg_idx])).Pointer;
+                        const T = @typeInfo(@TypeOf(args[arg_idx])).pointer;
                         if (T.child == u8) {
                             var i: usize = 0;
                             while (args[arg_idx][i] != 0) : (i += 1)
                                 vga.putChar(args[arg_idx][i]);
                         } else kputs(args[arg_idx]);
                     },
-                    .Pointer => {
+                    .pointer => {
                         kputs("0x");
                         kputs(string.toStringBase(@intFromPtr(args[arg_idx]), 16));
                     },
@@ -100,7 +100,7 @@ pub fn kprintf(comptime fmt: []const u8, args: anytype) void {
                     'i' => arg_type = .Int,
                     'x' => arg_type = .Hex,
                     'f' => arg_type = .Float,
-                    'p' => arg_type = .Pointer,
+                    'p' => arg_type = .pointer,
                     's' => arg_type = .String,
 
                     else => @compileError("invalid type identifier between the brackets"),

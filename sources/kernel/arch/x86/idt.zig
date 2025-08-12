@@ -100,8 +100,7 @@ pub fn idtFlush(t: u32) void {
         \\ sti
         :
         : [t] "{eax}" (t),
-        : "memory"
-    );
+        : .{ .memory = true });
     return;
 }
 

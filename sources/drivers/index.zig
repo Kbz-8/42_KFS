@@ -5,7 +5,7 @@ pub const power = @import("power/power.zig");
 const kernel = @import("kernel");
 
 pub fn initDrivers() void {
-    @setCold(true);
+    @branchHint(.cold);
     kernel.logs.klogln("[Drivers Manager] loading drivers...");
     kernel.logs.beginSection();
     kb.init();
@@ -16,7 +16,7 @@ pub fn initDrivers() void {
 }
 
 pub fn shutdownDrivers() void {
-    @setCold(true);
+    @branchHint(.cold);
     kernel.logs.klogln("[Drivers Manager] unloading drivers...");
     kernel.logs.klogln("[Drivers Manager] unloaded all drivers");
 }

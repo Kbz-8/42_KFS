@@ -104,7 +104,7 @@ pub fn keyboardHandler(regs: *kernel.arch.idt.IDTRegister) void {
 }
 
 pub fn init() void {
-    @setCold(true);
+    @branchHint(.cold);
     kernel.logs.klogln("[PS/2 Keyboard Driver] loading...");
     kernel.arch.idt.irqInstallHandler(1, &keyboardHandler);
     kernel.logs.klogln("[PS/2 Keyboard Driver] loaded");

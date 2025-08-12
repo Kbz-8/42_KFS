@@ -34,7 +34,7 @@ fn screensWatcher(screen: u8) void {
 }
 
 export fn kmain() void {
-    @setCold(true);
+    @branchHint(.cold);
     drivers.initDrivers();
     logs.klogln("Welcome to RatiOS !");
     drivers.vga.installScreenWatcher(screensWatcher);

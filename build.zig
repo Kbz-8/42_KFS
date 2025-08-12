@@ -1,38 +1,36 @@
 const std = @import("std");
 
-pub fn build(b: *std.Build) void
-{
-    const debug_symbols = b.option(bool, "debug", "Add debug symbols") orelse false;
-    
-    const kernel = b.addExecutable(.{
-        .name = "kernel.elf",
-        .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "sources/kernel/kmain.zig" } },
+pub fn build(b: *std.Build) void {
+    const kernel_module = b.createModule(.{
+        .root_source_file = b.path("sources/kernel/kmain.zig"),
         .target = b.resolveTargetQuery(.{
             .cpu_arch = .x86,
-            .abi = .gnu,
+            .abi = .eabi,
             .os_tag = .freestanding,
             .ofmt = .elf,
         }),
-        .optimize = .Debug,
-        .strip = !debug_symbols,
+        .optimize = b.standardOptimizeOption(.{}),
         .code_model = .kernel,
         .pic = false,
     });
-    kernel.setLinkerScriptPath(.{ .src_path = .{ .owner = b, .sub_path = "linker.ld" } });
+    const kernel = b.addExecutable(.{
+        .name = "kernel.elf",
+        .root_module = kernel_module,
+    });
+    kernel.setLinkerScript(b.path("linker.ld"));
 
-    const drivers_module = b.addModule("drivers", .{
-        .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "sources/drivers/index.zig" } }
+    const drivers_module = b.createModule(.{
+        .root_source_file = b.path("sources/drivers/index.zig"),
+    });
+    const libk_module = b.createModule(.{
+        .root_source_file = b.path("sources/libk/index.zig"),
     });
 
-    const libk_module = b.addModule("libk", .{
-        .root_source_file = .{ .src_path = .{ .owner = b, .sub_path = "sources/libk/index.zig" } }
-    });
-
-    drivers_module.addImport("kernel", &kernel.root_module);
+    drivers_module.addImport("kernel", kernel_module);
     drivers_module.addImport("libk", libk_module);
     kernel.root_module.addImport("drivers", drivers_module);
     kernel.root_module.addImport("libk", libk_module);
-    libk_module.addImport("kernel", &kernel.root_module);
+    libk_module.addImport("kernel", kernel_module);
     libk_module.addImport("drivers", drivers_module);
 
     b.installArtifact(kernel);
@@ -44,19 +42,7 @@ pub fn build(b: *std.Build) void
     const iso_path = b.fmt("{s}/ratiOS.iso", .{b.exe_dir});
     const kernel_path = b.fmt("{s}/kernel.elf", .{b.exe_dir});
 
-    const iso_cmd_str = &[_][]const u8
-    {
-        "/bin/bash", "-c",
-        std.mem.concat(b.allocator, u8, &[_][]const u8
-        {
-            "sleep 1 && ",
-            "mkdir -p ", iso_dir, "/boot/grub && ",
-            "mv ", kernel_path, " ", iso_dir, "/boot/ && ",
-            "cp sources/grub/grub.cfg ", iso_dir, "/boot/grub/ && ",
-            "grub-mkrescue -o ", iso_path, " ", iso_dir
-        })
-        catch unreachable
-    };
+    const iso_cmd_str = &[_][]const u8{ "/bin/bash", "-c", std.mem.concat(b.allocator, u8, &[_][]const u8{ "sleep 1 && ", "mkdir -p ", iso_dir, "/boot/grub && ", "mv ", kernel_path, " ", iso_dir, "/boot/ && ", "cp sources/grub/grub.cfg ", iso_dir, "/boot/grub/ && ", "grub-mkrescue -o ", iso_path, " ", iso_dir }) catch unreachable };
 
     const iso_cmd = b.addSystemCommand(iso_cmd_str);
     iso_cmd.step.dependOn(kernel_step);

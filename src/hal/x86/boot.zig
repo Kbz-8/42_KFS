@@ -16,9 +16,9 @@ export var _: MultibootHeader align(4) linksection(".multiboot") = .{
 };
 
 const multiboot = @import("../../boot/multiboot.zig");
+const boot = @import("../../kernel/bootinfo.zig");
 const gdt = @import("gdt.zig");
 const idt = @import("idt.zig");
-const boot = @import("../../boot/multiboot.zig");
 
 pub export var kernel_stack: [32 * 1024]u8 align(16) linksection(".bss") = undefined;
 pub export var user_stack: [64 * 1024]u8 align(16) linksection(".bss") = undefined;
@@ -31,14 +31,24 @@ export fn _start() align(16) linksection(".text.boot") callconv(.naked) noreturn
         \\ mov %%ebx, %[res]
         : [res] "=r" (-> u32),
     );
-    // Setup the stack
+    // Setup the stack and boostrap x86
     asm volatile (
         \\ movl %[stk], %esp
         \\ xor %ebp, %ebp
+        \\ push %[mbi]    // <-- pass arg on the stack for .c callconv
+        \\ call *%[x86Bootstrap]
+        \\ add  $4, %%esp // clean up the pushed arg
         :
         : [stk] "{ecx}" (@intFromPtr(&kernel_stack) + @sizeOf(@TypeOf(kernel_stack))),
-    );
+          [mbi] "r" (multiboot_info_addr),
+          [x86Bootstrap] "r" (&x86Bootstrap),
+        : .{ .memory = true });
 
+    while (true)
+        asm volatile ("hlt");
+}
+
+fn x86Bootstrap(multiboot_info_addr: u32) callconv(.c) void {
     gdt.gdtInit();
 
     var boot_infos: boot.BootInfos = .{};
@@ -47,7 +57,4 @@ export fn _start() align(16) linksection(".text.boot") callconv(.naked) noreturn
     idt.idtInit();
 
     kmain(&boot_infos);
-
-    while (true)
-        asm volatile ("hlt");
 }

@@ -11,3 +11,4 @@ Build/
 *.exe
 zig-out/
 .gdb_*
+compile_commands.json

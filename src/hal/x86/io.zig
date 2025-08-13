@@ -31,7 +31,6 @@ pub fn in(comptime size: PortType, port: u16) uintFor(type) {
             : [result] "={eax}" (-> u32),
             : [port] "N{dx}" (port),
         ),
-        else => @compileError("invalid data type. Only .byte, .word or .long"),
     };
 }
 
@@ -55,7 +54,6 @@ pub fn out(comptime size: PortType, port: u16, data: uintFor(size)) void {
             : [port] "{dx}" (port),
               [data] "{eax}" (data),
         ),
-        else => @compileError("invalid data type. Only .byte, .word or .long"),
     }
 }
 

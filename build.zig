@@ -1,10 +1,22 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
+    var disabled_features = std.Target.Cpu.Feature.Set.empty;
+    var enabled_features = std.Target.Cpu.Feature.Set.empty;
+
+    disabled_features.addFeature(@intFromEnum(std.Target.x86.Feature.mmx));
+    disabled_features.addFeature(@intFromEnum(std.Target.x86.Feature.sse));
+    disabled_features.addFeature(@intFromEnum(std.Target.x86.Feature.sse2));
+    disabled_features.addFeature(@intFromEnum(std.Target.x86.Feature.avx));
+    disabled_features.addFeature(@intFromEnum(std.Target.x86.Feature.avx2));
+    enabled_features.addFeature(@intFromEnum(std.Target.x86.Feature.soft_float));
+
     const target_kernel = b.resolveTargetQuery(.{
         .cpu_arch = .x86,
         .os_tag = .freestanding,
         .abi = .none,
+        .cpu_features_sub = disabled_features,
+        .cpu_features_add = enabled_features,
     });
     const optimize = b.standardOptimizeOption(.{});
 
@@ -16,7 +28,7 @@ pub fn build(b: *std.Build) void {
     });
 
     const kernel = b.addExecutable(.{
-        .name = "kernel",
+        .name = "kernel.elf",
         .root_module = kernel_module,
     });
     kernel.setLinkerScript(b.path("linker.ld"));
@@ -56,7 +68,7 @@ pub fn build(b: *std.Build) void {
     iso_step.dependOn(&iso_cmd.step);
     b.default_step.dependOn(iso_step);
 
-    const run_cmd_str = &[_][]const u8{ "qemu-system-i386", "-cdrom", iso_path };
+    const run_cmd_str = &[_][]const u8{ "qemu-system-i386", "-cdrom", iso_path, "-no-reboot", "-no-shutdown", "-d", "guest_errors" };
     const run_cmd = b.addSystemCommand(run_cmd_str);
     run_cmd.step.dependOn(b.getInstallStep());
     const run_step = b.step("run", "Run the kernel");

@@ -5,12 +5,12 @@ pub const Writer = struct {
     writeFn: *const fn (ctx: ?*anyopaque, bytes: []const u8) anyerror!usize,
     ctx: ?*anyopaque,
 
-    pub fn write(self: *Writer, bytes: []const u8) !usize {
+    pub fn write(self: *const Writer, bytes: []const u8) !usize {
         return self.writeFn(self.ctx, bytes);
     }
 };
 
-var sinks: [4]?Writer = .{null} ** 4;
+var sinks: [cfg.Config.print_sinks]?Writer = .{null} ** cfg.Config.print_sinks;
 var sink_count: usize = 0;
 
 pub fn addSink(w: Writer) void {

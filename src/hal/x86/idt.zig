@@ -1,5 +1,5 @@
 pub const io = @import("io.zig");
-pub const kpanic = @import("../../panic.zig").kpanic;
+pub const panic = @import("../../panic.zig").panic;
 
 extern fn isr0() void;
 extern fn isr1() void;
@@ -220,7 +220,7 @@ pub fn idtInit() void {
 
 export fn isrHandler(regs: *IDTRegister) void {
     if (regs.int_nb < 32 and regs.int_nb >= 0)
-        kpanic(error_messages[regs.int_nb]);
+        panic(error_messages[regs.int_nb]);
 }
 
 var irq_routines: [16]?*const fn (*IDTRegister) void = undefined;

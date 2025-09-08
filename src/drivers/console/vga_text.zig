@@ -24,7 +24,8 @@ fn clearScreen() void {
 }
 
 fn scrollIfNeeded() void {
-    if (row < VGA_HEIGHT) return;
+    if (row < VGA_HEIGHT)
+        return;
     // Move rows up by one
     var r: usize = 1;
     while (r < VGA_HEIGHT) : (r += 1) {
@@ -66,7 +67,8 @@ fn putByte(b: u8) void {
 }
 
 fn vgaWrite(_: ?*anyopaque, bytes: []const u8) !usize {
-    for (bytes) |b| putByte(b);
+    for (bytes) |b|
+        putByte(b);
     return bytes.len;
 }
 

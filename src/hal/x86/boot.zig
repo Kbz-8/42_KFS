@@ -1,19 +1,26 @@
-const ALIGN = 1 << 0;
-const MEMINFO = 1 << 1;
-const MAGIC = 0x1BADB002;
-const FLAGS = ALIGN | MEMINFO;
-
-const MultibootHeader = packed struct {
-    magic: i32 = MAGIC,
-    flags: i32,
-    checksum: i32,
-    padding: u32 = 0,
-};
-
-export var _: MultibootHeader align(4) linksection(".multiboot") = .{
-    .flags = FLAGS,
-    .checksum = -(MAGIC + FLAGS),
-};
+comptime {
+    asm (
+        \\ .set ALIGN,    1 << 0
+        \\ .set MEMINFO,  1 << 1
+        \\ .set GRAPHICS, 1 << 2
+        \\ .set FLAGS,    ALIGN | MEMINFO | GRAPHICS
+        \\ .set MAGIC,    0x1BADB002
+        \\ .set CHECKSUM, -(MAGIC + FLAGS)
+        \\
+        \\ .section .multiboot
+        \\ .align 16, 0
+        \\ .long MAGIC
+        \\ .long FLAGS
+        \\ .long CHECKSUM
+        \\
+        \\ .long 0,0,0,0,0
+        \\
+        \\ .long   0
+        \\ .long   0
+        \\ .long   0
+        \\ .long   32
+    );
+}
 
 const multiboot = @import("../../boot/multiboot.zig");
 const boot = @import("../../kernel/bootinfo.zig");

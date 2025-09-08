@@ -20,7 +20,7 @@ var lfb_width: u32 = 0;
 var lfb_height: u32 = 0;
 
 /// Provide the LFB parameters discovered at boot.
-pub fn configureLfb(base: usize, width: u32, height: u32, pitch: u32) void {
+pub fn configureLfb(base: u32, width: u32, height: u32, pitch: u32) void {
     lfb_base = @ptrFromInt(base);
     lfb_width = width;
     lfb_height = height;

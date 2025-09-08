@@ -21,6 +21,23 @@ pub fn setVideoMode(mode: VideoMode) !void {
     return arch.video.setVideoMode(mode);
 }
 
-pub fn configureLfb(base: usize, w: u32, h: u32, pitch: u32) void {
+pub fn configureLfb(base: u32, w: u32, h: u32, pitch: u32) void {
     arch.video.configureLfb(base, w, h, pitch);
+}
+
+pub fn lfbInfo() ?struct { base: [*]volatile u8, pitch: u32, width: u32, height: u32 } {
+    const maybe_lfb = arch.video.lfbInfo();
+    if (maybe_lfb) |lfb| {
+        return .{
+            .base = lfb.base,
+            .pitch = lfb.pitch,
+            .width = lfb.width,
+            .height = lfb.height,
+        };
+    }
+    return null;
+}
+
+pub fn halt() void {
+    arch.halt();
 }

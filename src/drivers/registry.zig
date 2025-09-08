@@ -26,6 +26,7 @@ fn defaultDetach(_: *Device) void {}
 
 const all_drivers = [_]*const DriverVTable{
     &@import("console/vga_text.zig").DRIVER,
+    &@import("console/vesa_lfb.zig").DRIVER,
 };
 
 pub fn drivers() []const *const DriverVTable {
